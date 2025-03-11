@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native";
 import { useTheme } from "../../hooks/use-theme";
-import useCreateStyles from "../../hooks/create-styles"
+import useCreateStyles from "../../hooks/create-styles";
+import { Text } from "../../components/ui/Text";
 
 const HomeScreen = () => {
   const theme = useTheme();
@@ -13,14 +14,13 @@ const HomeScreen = () => {
       justifyContent: "center",
       alignItems: "center",
     },
-    heading: {
-      ...theme.typography.heading,
-    },
   }));
 
   return (
     <View style={styles.container}>
-      <Text style={styles.heading}>Ifumsa, here we go</Text>
+      <Text variant="heading" color="textSecondary" uppercase fontWeight={700}>
+        Ifumsa mobile App
+      </Text>
     </View>
   );
 };
