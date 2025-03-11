@@ -5,12 +5,15 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { ThemeProvider } from "../context/theme-context";
+import { PlayfairDisplay_400Regular } from "@expo-google-fonts/playfair-display";
+import { Poppins_400Regular } from "@expo-google-fonts/poppins";
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    PlayfairDisplay: PlayfairDisplay_400Regular,
+    Poppins: Poppins_400Regular,
   });
 
   useEffect(() => {

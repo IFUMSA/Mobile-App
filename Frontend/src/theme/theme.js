@@ -10,23 +10,37 @@ export const theme = {
   typography: {
     heading: {
       fontSize: 32,
-      fontWeight: "700",
+      fontWeight: "600",
+      lineHeight: 40,
+    },
+    heading2: {
+      fontSize: 24,
+      fontWeight: "400",
+      lineHeight: 36,
+    },
+    heading3: {
+      fontSize: 24,
+      fontWeight: "600",
       lineHeight: 40,
     },
     subheading: {
-      fontSize: 24,
-      fontWeight: "500",
-      lineHeight: 30,
+      fontSize: 18,
+      fontWeight: "600",
     },
     body: {
       fontSize: 16,
       fontWeight: "400",
       lineHeight: 24,
     },
+    body2: {
+      fontSize: 14,
+      fontWeight: "400",
+      lineHeight: 20,
+    },
     caption: {
       fontSize: 12,
-      fontWeight: "300",
-      lineHeight: 18,
+      fontWeight: "400",
+      lineHeight: 20,
     },
   },
 };
