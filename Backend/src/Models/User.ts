@@ -1,6 +1,7 @@
 import { Types, model, Schema } from "mongoose";
+import { IUser } from "../Interfaces/user.interface";
 
-const UserSchema: Schema = new Schema(
+const UserSchema: Schema = new Schema<IUser>(
   {
     email: {
       type: String,
@@ -27,20 +28,21 @@ const UserSchema: Schema = new Schema(
     isVerified: {
       type: Boolean,
       required: true,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      default: null
+    },
+    verificationExpires: {
+      type: Date,
+      default: null,
     },
     bio: { type: String },
     profilePic: {
       type: String,
       default:
         "https://i.pinimg.com/736x/a8/57/00/a85700f3c614f6313750b9d8196c08f5.jpg",
-    },
-    accessToken: {
-      type: String,
-      default: null,
-    },
-    refreshToken: {
-      type: String,
-      default: null,
     },
   },
   {
