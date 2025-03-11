@@ -14,5 +14,6 @@ namespace NodeJS {
     EMAIL_PASSWORD: string;
     FRONTEND_URL: string;
     APP_URL: string;
+    SESSION_SECRET: string;
   }
 }

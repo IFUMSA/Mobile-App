@@ -2,10 +2,9 @@
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
 import { User } from "../Models/User";
-import { Request, Response } from "express";
+import { Application, Request, Response } from "express";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-
 import config from "../config";
 import { IUser } from "../Interfaces/user.interface";
 const salt = 10;
@@ -16,15 +15,15 @@ const generateVerificationToken = (): string => {
 };
 
 //Create A Nodemailer Transporter
-const transporter = nodemailer.createTransport({
-  host: config.EMAIL_HOST,
-  port: parseInt(config.EMAIL_PORT || "587", 10),
-  secure: config.EMAIL_SECURE === "true",
-  auth: {
-    user: config.EMAIL_USER,
-    pass: config.EMAIL_PASSWORD,
-  },
-});
+// const transporter = nodemailer.createTransport({
+//   host: config.EMAIL_HOST,
+//   port: parseInt(config.EMAIL_PORT || "587", 10),
+//   secure: config.EMAIL_SECURE === "true",
+//   auth: {
+//     user: config.EMAIL_USER,
+//     pass: config.EMAIL_PASSWORD,
+//   },
+// });
 
 //Create New User
 export const createUser = async (req: Request, res: Response) => {
@@ -77,21 +76,49 @@ export const createUser = async (req: Request, res: Response) => {
     await newUser.save();
 
     //Create Verification URL
-    const verificationURL = `${config.APP_URL}/verify-email?token=${verificationToken}`;
+    const verificationURL = `${config.APP_URL}/api/auth/verify-email?token=${verificationToken}`;
+
+    // Create test account (no signup needed)
+    const testAccount = await nodemailer.createTestAccount();
+
+    // /**
+    // Create a transporter using the test account
+    const transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+
+    // Send mail with the transporter
+    const info = await transporter.sendMail({
+      from: '"Your App" <foo@example.com>',
+      to: email,
+      subject: "Verify Your Email",
+      html: `<p>Click <a href="${verificationURL}">here</a> to verify</p>`,
+    });
+
+    // Log URL where you can see the email (it's not actually sent)
+    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+
+    //  */
 
     //Send verification email
-    await transporter.sendMail({
-      from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
-      to: email,
-      subject: "Please Verify Your Email Address",
-      html: `
-  <h1>Email Verification</h1>
-  <p>Hello ${firstName},</p>
-  <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
-  <a href="${verificationURL}">Verify your email</a>
-  <p>This link will expire in 24 hours</p>
-  `,
-    });
+    //   await transporter.sendMail({
+    //     from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
+    //     to: email,
+    //     subject: "Please Verify Your Email Address",
+    //     html: `
+    // <h1>Email Verification</h1>
+    // <p>Hello ${firstName},</p>
+    // <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
+    // <a href="${verificationURL}">Verify your email</a>
+    // <p>This link will expire in 24 hours</p>
+    // `,
+    //   });
 
     //After verification email has been sent, save user details
     res.status(201).json({
@@ -183,21 +210,47 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
     await user.save();
 
     //Create Verification URL
-    const verificationURL = `${config.APP_URL}/verify-email?token=${verificationToken}`;
+    const verificationURL = `${config.APP_URL}/api/auth/verify-email?token=${verificationToken}`;
+
+    // /** Test account for verification
+    const testAccount = await nodemailer.createTestAccount();
+    // Create a transporter using the test account
+    const transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+
+    // Send mail with the transporter
+    const info = await transporter.sendMail({
+      from: '"Your App" <foo@example.com>',
+      to: email,
+      subject: "Verify Your Email",
+      html: `<p>Click <a href="${verificationURL}">here</a> to verify</p>`,
+    });
+
+    // Log URL where you can see the email (it's not actually sent)
+    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+
+    //  */
 
     //Send verification email
-    await transporter.sendMail({
-      from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
-      to: email,
-      subject: "Please Verify Your Email Address",
-      html: `
-  <h1>Email Verification</h1>
-  <p>Hello ${user.firstName},</p>
-  <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
-  <a href="${verificationURL}">Verify your email</a>
-  <p>This link will expire in 24 hours</p>
-  `,
-    });
+    //   await transporter.sendMail({
+    //     from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
+    //     to: email,
+    //     subject: "Please Verify Your Email Address",
+    //     html: `
+    // <h1>Email Verification</h1>
+    // <p>Hello ${user.firstName},</p>
+    // <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
+    // <a href="${verificationURL}">Verify your email</a>
+    // <p>This link will expire in 24 hours</p>
+    // `,
+    //   });
     res.status(200).json({ message: "Verification Email Sent Successfully" });
     return;
 
@@ -205,6 +258,59 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Resend Verification error: ", error);
     res.status(500).json({ message: "Failed To send verification email" });
+    return;
+  }
+};
+
+//Route to Reset Password
+
+//Login To Your Account
+export const signInUser = async (
+  req: Request,
+  // & {
+  //   session: {
+  //     userId: any;
+  //     isAuthenticated: boolean;
+  //   };
+  // },
+  res: Response
+) => {
+  try {
+    const { email, password } = req.body;
+
+    //Check If none of the fields are empty
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      res.status(400).json({ errors: errors.array() });
+      return;
+    }
+
+    //Fetch user based on the data provided by user
+    const user: IUser | null = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      res.status(401).json({ message: "Invalid Credentials" });
+      return;
+    }
+
+    //Confirm if the user is verified
+    if (!user.isVerified) {
+      res.status(403).json({
+        message:
+          "Email Not Verified. Please Verify your email before logging in",
+        needsVerification: true,
+      });
+      return;
+    }
+
+    //Set Session Data
+    req.session.userId = user._id;
+    req.session.isAuthenticated = true;
+
+    res.status(200).json({ message: "Login Successful" });
+    return;
+  } catch (error) {
+    console.error("Login Error: ", error);
+    res.status(500).json({ message: "Server error" });
     return;
   }
 };
