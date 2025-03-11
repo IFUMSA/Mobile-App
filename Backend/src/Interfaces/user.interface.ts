@@ -7,8 +7,8 @@ export interface IUser extends Document {
     firstName: string,
     lastName: string,
     isVerified: boolean,
+    verificationToken: string,
+    verificationExpires: Date,
     bio: string,
     profilePic: string,
-    accessToken: string,
-    refreshToken?: string
   }
