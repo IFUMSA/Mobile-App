@@ -12,7 +12,7 @@ export const Text = ({
   fontWeight,
   lineHeight,
   letterSpacing,
-  fontFamily = "PlayfairDisplay",
+  fontFamily,
   textDecorationLine,
   textTransform,
   style,

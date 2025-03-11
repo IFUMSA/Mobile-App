@@ -18,8 +18,8 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text variant="heading" color="textSecondary" uppercase noWrap fontWeight={600}>
-        Ifumsa mobile app
+      <Text variant="heading" color="textSecondary" uppercase fontWeight={700}>
+        Ifumsa mobile App
       </Text>
     </View>
   );
