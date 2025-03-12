@@ -3,8 +3,8 @@ import { check } from "express-validator";
 import {
   createUser,
   resendVerificationEmail,
-  verifyUser
-//   signInUser,
+  verifyUser,
+  signInUser
 //   signinWithGoogle,
 } from "../Controllers/authController";
 
@@ -26,7 +26,11 @@ authRouter.post(
     verifyUser
   )
 
+  //Request a new Verification mail
   authRouter.post('/resend-verification', resendVerificationEmail)
+
+  //Login using email and password
+  authRouter.post('/signin', signInUser)
 
 
   export = authRouter;

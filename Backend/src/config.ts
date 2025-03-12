@@ -17,5 +17,6 @@ export default {
     EMAIL_USER: process.env.EMAIL_USER,
     EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
     FRONTEND_URL : process.env.FRONTEND_URL,
-    APP_URL : process.env.APP_URL
+    APP_URL : process.env.APP_URL,
+    SESSION_SECRET: process.env.SESSION_SECRET
 }
