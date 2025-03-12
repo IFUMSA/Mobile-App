@@ -22,11 +22,11 @@ SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    Poppins: Poppins_400Regular,
+    Poppins_400Regular,
     Poppins_500Medium,
     Poppins_600SemiBold,
     Poppins_700Bold,
-    PlayfairDisplay: PlayfairDisplay_400Regular,
+    PlayfairDisplay_400Regular,
     PlayfairDisplay_500Medium,
     PlayfairDisplay_600SemiBold,
     PlayfairDisplay_700Bold,
