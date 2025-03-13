@@ -1,6 +1,7 @@
 import React from "react";
 import { Text as RNText, StyleSheet } from "react-native";
-import { useTheme } from "../../../hooks/use-theme";
+import { useTheme } from "@hooks/use-theme";
+import getFontName from "@theme/font-family";
 
 export const Text = ({
   variant = "body1",
@@ -9,7 +10,7 @@ export const Text = ({
   noWrap = false,
   uppercase = false,
   fontSize,
-  fontWeight,
+  fontWeight: propFontWeight,
   lineHeight,
   letterSpacing,
   fontFamily,
@@ -25,6 +26,12 @@ export const Text = ({
 
   const textColor = color && (theme.colors[color] || color);
 
+  const fontName = fontFamily || variantStyle?.fontFamily || "Poppins";
+
+  const fontWeight = propFontWeight || variantStyle?.fontWeight || "400";
+
+  const resolvedFontFamily = getFontName(fontName, fontWeight);
+
   const textStyles = [
     variantStyle,
     align !== "left" && { textAlign: align },
@@ -33,7 +40,7 @@ export const Text = ({
     fontWeight && { fontWeight },
     lineHeight && { lineHeight },
     letterSpacing && { letterSpacing },
-    fontFamily && { fontFamily },
+    resolvedFontFamily && { fontFamily: resolvedFontFamily },
     textDecorationLine && { textDecorationLine },
     textTransform && { textTransform },
     noWrap && styles.noWrap,
