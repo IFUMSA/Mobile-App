@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, View, Image } from "react-native";
 import { useTheme } from "@hooks/use-theme";
 import { TextInput } from ".";
 import { Ionicons } from "@expo/vector-icons";
@@ -12,9 +12,28 @@ export const ProfileSetupInput = forwardRef(
       container: {
         marginBottom: 16,
       },
+      iconImage: {
+        width: iconSize,
+        height: iconSize,
+      },
     });
 
     const defaultIconColor = theme.colors.gray;
+
+    const renderStartAdornment = () => {
+      if (typeof icon === "string") {
+        return (
+          <Ionicons
+            name={icon}
+            size={iconSize}
+            color={iconColor || defaultIconColor}
+          />
+        );
+      }
+      return (
+        <Image source={icon} style={styles.iconImage} resizeMode="contain" />
+      );
+    };
 
     return (
       <View style={styles.container}>
@@ -24,13 +43,7 @@ export const ProfileSetupInput = forwardRef(
           innerLabel={true}
           showSlash={true}
           placeholder={placeholder}
-          startAdornment={
-            <Ionicons
-              name={icon}
-              size={iconSize}
-              color={iconColor || defaultIconColor}
-            />
-          }
+          startAdornment={renderStartAdornment()}
           style={{
             ...theme.typography.body2,
             lineHeight: 21,

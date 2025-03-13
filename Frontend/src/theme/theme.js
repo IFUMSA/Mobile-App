@@ -24,7 +24,7 @@ export const theme = {
       fontSize: 24,
       fontWeight: "600",
       lineHeight: 40,
-      fontFamily: "PlayfairDisplay",
+      fontFamily: "Poppins",
     },
     subheading: {
       fontSize: 18,
