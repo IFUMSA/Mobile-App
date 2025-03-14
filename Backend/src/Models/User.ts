@@ -32,13 +32,17 @@ const UserSchema: Schema = new Schema<IUser>(
     },
     verificationToken: {
       type: String,
-      default: null
+      default: null,
     },
     verificationExpires: {
       type: Date,
       default: null,
     },
-    bio: { type: String },
+    resetCode: { type: String, default: null },
+    resetCodeExpires: { type: Date, default: null },
+    resetToken: { type: String, default: null },
+    resetTokenExpires: { type: Date, default: null },
+    bio: { type: String, default: " " },
     profilePic: {
       type: String,
       default:
