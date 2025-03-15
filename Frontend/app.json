@@ -1,10 +1,55 @@
 {
   "expo": {
-    "scheme": "acme",
+    "name": "Ifumsa",
+    "slug": "Ifumsa",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/Images/ifumsa-logo.png",
+    "scheme": "myapp",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "splash": {
+        "image": "./src/assets/Images/ifumsa-logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1F382E",
+        "imageResizeMode": "contain",
+        "imageSize": 383
+      }
+    },
+    "android": {
+      "splash": {
+        "image": "./src/assets/Images/ifumsa-logo.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#1F382E",
+        "imageResizeMode": "contain",
+        "imageSize": 383
+      },
+      "package": "com.seyimarv.Ifumsa"
+    },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./src/assets/Images/ifumsa-logo.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#1F382E",
+          "imageSize": 383
+        }
+      ]
     ],
-    "name": "ifumsa",
-    "slug": "ifumsa"
+    "splash": {
+      "image": "./src/assets/Images/ifumsa-logo.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1F382E",
+      "imageSize": 383
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
   }
 }
