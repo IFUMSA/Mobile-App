@@ -1,10 +1,10 @@
 import { useFonts } from "expo-font";
-import { Stack } from "expo-router";
+import { Slot } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
-import { ThemeProvider } from "../context/theme-context";
+import { ThemeProvider } from "@context/theme-context";
+import { AppLayout } from "@components/AppLayout";
 import {
   PlayfairDisplay_400Regular,
   PlayfairDisplay_500Medium,
@@ -17,6 +17,7 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
+import { View } from "react-native";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,16 +40,14 @@ export default function RootLayout() {
   }, [loaded]);
 
   if (!loaded) {
-    return null;
+    return <View style={{ flex: 1, backgroundColor: "#1F382E" }}></View>;
   }
 
   return (
     <ThemeProvider>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
+      <AppLayout>
+        <Slot />
+      </AppLayout>
     </ThemeProvider>
   );
 }
