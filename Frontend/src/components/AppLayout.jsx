@@ -1,19 +1,22 @@
-import React from 'react';
-import { View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
-import { useContext } from 'react';
-import { ThemeContext } from '../context/theme-context';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { StatusBar } from "expo-status-bar";
+import { useTheme } from "@hooks/use-theme";
 
 export const AppLayout = ({ children }) => {
-  const { theme } = useContext(ThemeContext);
+  const { theme } = useTheme();
 
   return (
-    <View style={{ 
-      flex: 1, 
-      backgroundColor: theme.colors.background
-    }}>
-      {children}
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <View style={styles.content}>{children}</View>
       <StatusBar style="dark" />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  content: { flex: 1 },
+});

@@ -1,0 +1,78 @@
+import React from 'react';
+import { StyleSheet, View, ScrollView } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { useTheme } from '@hooks/use-theme';
+
+const Container = ({
+  children,
+  style,
+  scrollable = false,
+  keyboardAware = false,
+  contentContainerStyle,
+  withPadding = true,
+  backgroundColor,
+  ...rest
+}) => {
+  const { theme } = useTheme();
+  
+  const containerStyles = [
+    styles.container,
+    withPadding && styles.padding,
+    { backgroundColor: backgroundColor || theme.colors.white },
+    style
+  ];
+
+  const contentStyles = [
+    styles.content,
+    contentContainerStyle
+  ];
+
+  if (keyboardAware) {
+    return (
+      <KeyboardAwareScrollView
+        style={containerStyles}
+        contentContainerStyle={contentStyles}
+        enableOnAndroid={true}
+        enableAutomaticScroll={true}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        {...rest}
+      >
+        {children}
+      </KeyboardAwareScrollView>
+    );
+  }
+
+  if (scrollable) {
+    return (
+      <ScrollView
+        style={containerStyles}
+        contentContainerStyle={contentStyles}
+        showsVerticalScrollIndicator={false}
+        {...rest}
+      >
+        {children}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={containerStyles} {...rest}>
+      {children}
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  padding: {
+    paddingHorizontal: 24,
+  },
+  content: {
+    flexGrow: 1,
+  }
+});
+
+export default Container;
