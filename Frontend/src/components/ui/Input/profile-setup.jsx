@@ -9,9 +9,9 @@ export const ProfileSetupInput = forwardRef(
     const { theme } = useTheme();
 
     const styles = StyleSheet.create({
-      container: {
-        marginBottom: 16,
-      },
+      // container: {
+      //   marginBottom: 16,
+      // },
       iconImage: {
         width: iconSize,
         height: iconSize,
@@ -54,3 +54,5 @@ export const ProfileSetupInput = forwardRef(
     );
   }
 );
+
+ProfileSetupInput.displayName = "ProfileSetupInput";
