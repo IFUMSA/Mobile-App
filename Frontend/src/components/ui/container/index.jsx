@@ -1,7 +1,6 @@
 import React from 'react';
 import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
-import { useTheme } from '@hooks/use-theme';
 
 const Container = ({
   children,
@@ -13,12 +12,11 @@ const Container = ({
   backgroundColor,
   ...rest
 }) => {
-  const { theme } = useTheme();
   
   const containerStyles = [
     styles.container,
     withPadding && styles.padding,
-    { backgroundColor: backgroundColor || theme.colors.white },
+    { backgroundColor: backgroundColor },
     style
   ];
 

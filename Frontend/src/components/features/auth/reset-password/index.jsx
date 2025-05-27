@@ -40,17 +40,14 @@ const ResetPasswordForm = () => {
               label="Confirm your new password"
             />
           </View>
-
-          <Link href="/(auth)/(recovery)/reset-password/success" asChild>
-            <Button
-              variant="secondary"
-              fullWidth
-              style={styles.button}
-              onPress={handleResetPassword}
-            >
-              Reset Password
-            </Button>
-          </Link>
+          <Button
+            variant="secondary"
+            fullWidth
+            style={styles.button}
+            onPress={handleResetPassword}
+          >
+            Reset Password
+          </Button>
         </>
       )}
     </Container>
@@ -60,7 +57,6 @@ const ResetPasswordForm = () => {
 const styles = StyleSheet.create({
   inputsContainer: {
     gap: 32,
-    marginTop: 24,
   },
   button: {
     marginTop: 80,

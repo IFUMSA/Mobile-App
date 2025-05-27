@@ -26,7 +26,7 @@ const AuthLayout = () => {
           screenOptions={{
             headerShown: false,
             contentStyle: {
-              backgroundColor: 'transparent',
+              backgroundColor: theme.colors.white,
               flex: 1,
               width: '100%',
               height: '100%',
