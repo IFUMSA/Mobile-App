@@ -1,19 +1,27 @@
-import React, { useState } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text } from '@components/ui/Text';
-import { Button } from '@components/ui/button';
-import { Link } from 'expo-router';
-import { TextInput } from '@components/ui/Input';
+import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
+import { Text } from "@components/ui/Text";
+import { Button } from "@components/ui/button";
+import { Link } from "expo-router";
+import  OTPInput from "@components/ui/Input/otp-input";
 import AuthHeader from "@ui/AuthHeader";
 import Container from "@components/ui/container";
 
 const VerifyOtp = () => {
-  const [otp, setOtp] = useState('');
+  const [otp, setOtp] = useState("");
 
   const handleVerify = () => {
     // Handle OTP verification logic
-    console.log('Verifying OTP:', otp);
+    console.log("Verifying OTP:", otp);
   };
+
+  const handleOtpComplete = (completedOtp) => {
+    console.log("OTP completed:", completedOtp);
+    // Auto-submit when OTP is complete
+    // handleVerify();
+  };
+
+  const [code, setCode] = useState("");
 
   return (
     <Container>
@@ -22,13 +30,7 @@ const VerifyOtp = () => {
         Check your mail and enter 4-digit recovery code
       </Text>
       <View style={styles.inputsContainer}>
-        <TextInput
-          placeholder="Enter 4-digit code"
-          value={otp}
-          onChangeText={setOtp}
-          keyboardType="number-pad"
-          maxLength={4}
-        />
+        <OTPInput onChange={setCode} />
       </View>
       <Link href="/(auth)/(recovery)/reset-password" asChild>
         <Button
@@ -46,7 +48,7 @@ const VerifyOtp = () => {
 
 const styles = StyleSheet.create({
   description: {
-    marginTop: 36,
+    // marginTop: 36,
   },
   inputsContainer: {
     gap: 32,

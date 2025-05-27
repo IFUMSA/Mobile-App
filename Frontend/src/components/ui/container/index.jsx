@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView, Platform } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useTheme } from '@hooks/use-theme';
 
@@ -36,6 +36,11 @@ const Container = ({
         enableAutomaticScroll={true}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        extraScrollHeight={Platform.OS === 'android' ? 50 : 20}
+        resetScrollToCoords={{ x: 0, y: 0 }}
+        scrollEnabled={true}
+        nestedScrollEnabled={Platform.OS === 'android'}
+        keyboardOpeningTime={Platform.OS === 'android' ? 500 : 250}
         {...rest}
       >
         {children}
@@ -66,6 +71,9 @@ const Container = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    maxWidth: 600,
+    alignSelf: 'center',
+    width: '100%',
   },
   padding: {
     paddingHorizontal: 24,

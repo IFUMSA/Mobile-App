@@ -1,10 +1,9 @@
 import React from 'react';
-import { View, StyleSheet, StatusBar } from 'react-native';
+import { View, StyleSheet, StatusBar, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { useTheme } from '@hooks/use-theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@components/ui/Text';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
 const AuthLayout = () => {
   const { theme } = useTheme();
@@ -12,37 +11,28 @@ const AuthLayout = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.colors.primary }]} edges={['right', 'left', 'top']}>
       <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
-      <KeyboardAwareScrollView
-        style={styles.keyboardAwareScrollView}
-        contentContainerStyle={styles.scrollContainer}
-        enableOnAndroid={true}
-        enableAutomaticScroll={true}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        extraScrollHeight={20}
-      >
-        <View style={styles.headerContainer}>
-          <Text variant="heading" fontWeight="600" color="white">
-            Hello!
-          </Text>
-          <Text variant="subheading" color="white">
-            Welcome IFUMSAITE!
-          </Text>
-        </View>
+      
+      <View style={styles.headerContainer}>
+        <Text variant="heading" fontWeight="600" color="white">
+          Hello!
+        </Text>
+        <Text variant="subheading" color="white">
+          Welcome IFUMSAITE!
+        </Text>
+      </View>
 
+      <View style={[styles.stackWrapper, { backgroundColor: theme.colors.white }]}>
         <Stack
           screenOptions={{
             headerShown: false,
             contentStyle: {
-              backgroundColor: theme.colors.white,
+              backgroundColor: 'transparent',
               flex: 1,
               width: '100%',
               height: '100%',
-              paddingHorizontal: 24,
+              paddingHorizontal: 0,
               paddingVertical: 0,
               margin: 0,
-              borderTopLeftRadius: 60,
-              borderTopRightRadius: 60,
             },
             animation: 'fade',
             presentation: 'card',
@@ -61,7 +51,7 @@ const AuthLayout = () => {
             }}
           />
         </Stack>
-      </KeyboardAwareScrollView>
+      </View>
     </SafeAreaView>
   );
 };
@@ -70,16 +60,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  keyboardAwareScrollView: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-  },
   headerContainer: {
     paddingHorizontal: 24,
     paddingTop: 48,
     paddingBottom: 48,
+  },
+  stackWrapper: {
+    flex: 1,
+    borderTopLeftRadius: 60,
+    borderTopRightRadius: 60,
+    overflow: 'hidden',
+    ...(Platform.OS === 'android' && {
+      elevation: 4,
+    }),
   },
 });
 
