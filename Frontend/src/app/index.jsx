@@ -1,7 +1,7 @@
 import { View, StyleSheet, Image, Animated, StatusBar } from "react-native";
 import { Text } from "@components/ui/Text";
 import { useTheme } from "@hooks/use-theme";
-import { useLayoutEffect, useRef, useState, useEffect } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
 import { useRouter } from "expo-router";
 
 export default function LandingScreen() {
@@ -16,10 +16,10 @@ export default function LandingScreen() {
 
   const router = useRouter();
 
-  const animateToNextScreen = () => {
+  const animateToNextScreen = useCallback(() => {
     if (isAnimating) return;
     if (currentScreen === finalScreenIndex) {
-      navigation.navigate("signup");
+      router.push("/signup");
       return;
     }
 
@@ -43,7 +43,7 @@ export default function LandingScreen() {
         }, 50);
       });
     });
-  };
+  }, [currentScreen, fadeAnim, isAnimating, router]);
 
   useLayoutEffect(() => {
     Animated.timing(fadeAnim, {
@@ -51,7 +51,7 @@ export default function LandingScreen() {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [fadeAnim]);
 
   useEffect(() => {
     if (isAnimating) return;
@@ -69,7 +69,7 @@ export default function LandingScreen() {
     }
 
     return () => clearTimeout(transitionTimer);
-  }, [currentScreen, isAnimating]);
+  }, [animateToNextScreen, currentScreen, isAnimating, router]);
 
   const renderContent = () => {
     switch (currentScreen) {

@@ -24,9 +24,9 @@ export const ProfileSetupSelect = forwardRef(
     const [isOpen, setIsOpen] = useState(false);
 
     const styles = StyleSheet.create({
-      container: {
-        marginBottom: 16,
-      },
+      // container: {
+      //   marginBottom: 16,
+      // },
       iconImage: {
         width: iconSize,
         height: iconSize,
@@ -92,3 +92,5 @@ export const ProfileSetupSelect = forwardRef(
     );
   }
 );
+
+ProfileSetupSelect.displayName = "ProfileSetupSelect";
