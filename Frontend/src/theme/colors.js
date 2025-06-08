@@ -11,6 +11,7 @@ const baseColors = {
   modalOverlay: "rgba(7, 13, 11, 0.5)",
   success: "#2A996B",
   error: "#F84F4F",
+  grayLight: "#D9D9D9",
 };
 
 const createAlphaVariants = (hexColor, alphaLevels) => {
@@ -32,4 +33,5 @@ export const colors = {
   secondaryAlpha: createAlphaVariants(baseColors.secondary, [2, 10, 80]),
   blackAlpha: createAlphaVariants(baseColors.black, [2]),
   grayAlpha: createAlphaVariants(baseColors.gray, [50]),
+  grayLightAlpha: createAlphaVariants(baseColors.grayLight, [50]),
 };

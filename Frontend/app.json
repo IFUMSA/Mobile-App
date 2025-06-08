@@ -5,7 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./src/assets/Images/ifumsa-logo.png",
-    "scheme": "myapp",
+    "scheme": "ifumsa",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -29,7 +29,6 @@
       "package": "com.seyimarv.Ifumsa"
     },
     "plugins": [
-      "expo-router",
       [
         "expo-splash-screen",
         {

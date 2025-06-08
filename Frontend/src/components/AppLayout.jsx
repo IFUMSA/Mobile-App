@@ -1,6 +1,5 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
-import { StatusBar } from "expo-status-bar";
 import { useTheme } from "@hooks/use-theme";
 
 export const AppLayout = ({ children }) => {
@@ -11,7 +10,6 @@ export const AppLayout = ({ children }) => {
       style={[styles.container, { backgroundColor: theme.colors.background }]}
     >
       <View style={styles.content}>{children}</View>
-      <StatusBar style="dark" />
     </View>
   );
 };
