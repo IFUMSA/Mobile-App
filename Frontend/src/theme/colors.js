@@ -34,4 +34,5 @@ export const colors = {
   blackAlpha: createAlphaVariants(baseColors.black, [2]),
   grayAlpha: createAlphaVariants(baseColors.gray, [50]),
   grayLightAlpha: createAlphaVariants(baseColors.grayLight, [50]),
+  whiteAlpha: createAlphaVariants(baseColors.white, [90]),
 };
