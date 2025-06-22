@@ -4,7 +4,7 @@ import { TextInput } from "@components/ui/Input";
 import { Button } from "@components/ui/button";
 import { Link } from "expo-router";
 import Container from "@components/ui/container";
-import AuthHeader from "@ui/AuthHeader";
+import AuthHeader from "@components/ui/PageHeader";
 import ResetPasswordSuccess from "./success";
 
 const ResetPasswordForm = () => {
@@ -23,7 +23,7 @@ const ResetPasswordForm = () => {
         <ResetPasswordSuccess />
       ) : (
         <>
-          <AuthHeader title="New Password" />
+          <AuthHeader title="New Password" isAuth />
           <View style={styles.inputsContainer}>
             <TextInput
               placeholder="New Password"

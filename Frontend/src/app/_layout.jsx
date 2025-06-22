@@ -46,7 +46,7 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AppLayout>
-       <Slot />
+        <Slot />
       </AppLayout>
     </ThemeProvider>
   );

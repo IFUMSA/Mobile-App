@@ -4,14 +4,17 @@ import { Link } from 'expo-router';
 import { TextInput } from '@components/ui/Input';
 import { Button } from '@components/ui/button';
 import { Text } from '@components/ui/Text';
+import { useRouter } from 'expo-router';
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const router = useRouter();
 
   const handleLogin = () => {
     // Handle login logic here
     console.log('Login with:', { email, password });
+    router.push('/home');
   };
 
   return (

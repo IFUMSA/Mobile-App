@@ -4,7 +4,7 @@ import { TextInput } from "@components/ui/Input";
 import { Button } from "@components/ui/button";
 import { Text } from "@components/ui/Text";
 import Container from "@components/ui/container";
-import AuthHeader from "@ui/AuthHeader";
+import AuthHeader from "@components/ui/PageHeader";
 
 const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("");
@@ -16,7 +16,7 @@ const ForgotPasswordForm = () => {
 
   return (
     <Container>
-      <AuthHeader title="Forgot Password?" />
+      <AuthHeader title="Forgot Password?" isAuth />
       <Text variant="body2">
         Fill in your email and we'll send a code to reset your password
       </Text>

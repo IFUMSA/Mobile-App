@@ -4,7 +4,7 @@ import { Text } from "@components/ui/Text";
 import { Button } from "@components/ui/button";
 import { Link } from "expo-router";
 import  OTPInput from "@components/ui/Input/otp-input";
-import AuthHeader from "@ui/AuthHeader";
+import AuthHeader from "@components/ui/PageHeader";
 import Container from "@components/ui/container";
 
 const VerifyOtp = () => {
@@ -25,7 +25,7 @@ const VerifyOtp = () => {
 
   return (
     <Container>
-      <AuthHeader title="Verification" />
+      <AuthHeader title="Verification" isAuth />
       <Text variant="body2" style={styles.description}>
         Check your mail and enter 4-digit recovery code
       </Text>

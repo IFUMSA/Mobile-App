@@ -1,5 +1,5 @@
-import React from "react";
-import { View, StyleSheet, Platform } from "react-native";
+import React, { useState } from "react";
+import { View, StyleSheet, Platform, Pressable } from "react-native";
 import { useTheme } from "@hooks/use-theme";
 import AnnouncementCarousel from "./announcement-carousel";
 import { StatusBar } from "expo-status-bar";
@@ -8,9 +8,19 @@ import EventCard from "@components/ui/EventCard";
 import Container from "@components/ui/container";
 import { Text } from "@components/ui/Text";
 import NavigationLinks from "./navigation-links";
+import Sidebar from "@components/ui/Sidebar";
 
 const Home = () => {
   const { theme } = useTheme();
+  const [sidebarVisible, setSidebarVisible] = useState(false);
+
+  const openSidebar = () => {
+    setSidebarVisible(true);
+  };
+
+  const closeSidebar = () => {
+    setSidebarVisible(false);
+  };
 
   return (
     <View style={[styles.container]}>
@@ -21,9 +31,9 @@ const Home = () => {
           { backgroundColor: theme.colors.primary },
         ]}
       >
-        <View style={styles.menuIcon}>
+        <Pressable style={styles.menuIcon} onPress={openSidebar}>
           <Feather name="menu" size={24} color="white" />
-        </View>
+        </Pressable>
       </View>
       <Container>
         <AnnouncementCarousel />
@@ -33,6 +43,10 @@ const Home = () => {
         <EventCard />
         <NavigationLinks />
       </Container>
+      <Sidebar 
+        visible={sidebarVisible} 
+        onClose={closeSidebar} 
+      />
     </View>
   );
 };
