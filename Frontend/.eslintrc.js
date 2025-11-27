@@ -16,7 +16,11 @@ module.exports = {
           '@theme': './src/theme',
           '@app': './src/app',
           '@assets': './src/assets',
-          '@ui': './src/components/ui'
+          '@ui': './src/components/ui',
+          '@services': './src/services',
+          '@lib': './src/lib',
+          '@providers': './src/providers',
+          '@api': './src/hooks/api'
         }
       },
       node: {

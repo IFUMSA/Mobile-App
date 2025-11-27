@@ -4,6 +4,8 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { ThemeProvider } from "@context/theme-context";
+import { AuthProvider } from "@context/auth-context";
+import { QueryProvider } from "../providers/query-provider";
 import { AppLayout } from "@components/AppLayout";
 import {
   PlayfairDisplay_400Regular,
@@ -44,10 +46,14 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider>
-      <AppLayout>
-        <Slot />
-      </AppLayout>
-    </ThemeProvider>
+    <QueryProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <AppLayout>
+            <Slot />
+          </AppLayout>
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryProvider>
   );
 }
