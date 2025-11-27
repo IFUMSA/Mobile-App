@@ -2,46 +2,64 @@ import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { Text } from "@components/ui/Text";
 import { Button } from "@components/ui/button";
-import { Link } from "expo-router";
-import  OTPInput from "@components/ui/Input/otp-input";
+import { useRouter, useLocalSearchParams } from "expo-router";
+import OTPInput from "@components/ui/Input/otp-input";
 import AuthHeader from "@components/ui/PageHeader";
 import Container from "@components/ui/container";
+import { useVerifyResetCodeMutation } from "@api";
 
 const VerifyOtp = () => {
-  const [otp, setOtp] = useState("");
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const router = useRouter();
+  const { email } = useLocalSearchParams();
+
+  const { mutate: verifyCode, isPending: isLoading } = useVerifyResetCodeMutation({
+    onSuccess: (data) => {
+      router.push({
+        pathname: "/(auth)/(recovery)/reset-password",
+        params: { resetToken: data.resetToken },
+      });
+    },
+    onError: (err) => {
+      setError(err.message || "Invalid code. Please try again.");
+    },
+  });
 
   const handleVerify = () => {
-    // Handle OTP verification logic
-    console.log("Verifying OTP:", otp);
-  };
+    setError("");
+    
+    if (!code || code.length < 6) {
+      setError("Please enter the complete 6-digit code");
+      return;
+    }
 
-  const handleOtpComplete = (completedOtp) => {
-    console.log("OTP completed:", completedOtp);
-    // Auto-submit when OTP is complete
-    // handleVerify();
+    verifyCode({ email, code });
   };
-
-  const [code, setCode] = useState("");
 
   return (
     <Container>
       <AuthHeader title="Verification" isAuth />
       <Text variant="body2" style={styles.description}>
-        Check your mail and enter 4-digit recovery code
+        Check your mail and enter 6-digit recovery code
       </Text>
+      
+      {error ? (
+        <Text variant="body2" style={styles.errorText}>{error}</Text>
+      ) : null}
+      
       <View style={styles.inputsContainer}>
-        <OTPInput onChange={setCode} />
+        <OTPInput onChange={setCode} length={6} />
       </View>
-      <Link href="/(auth)/(recovery)/reset-password" asChild>
-        <Button
-          variant="secondary"
-          fullWidth
-          style={styles.button}
-          onPress={handleVerify}
-        >
-          Continue
-        </Button>
-      </Link>
+      <Button
+        variant="secondary"
+        fullWidth
+        style={styles.button}
+        onPress={handleVerify}
+        loading={isLoading}
+      >
+        Continue
+      </Button>
     </Container>
   );
 };
@@ -56,6 +74,10 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: 80,
+  },
+  errorText: {
+    color: "#dc2626",
+    marginTop: 12,
   },
 });
 

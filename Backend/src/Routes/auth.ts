@@ -50,6 +50,6 @@ authRouter.post("/forgot-password", forgotPassword);
 authRouter.post("/verify-reset-code", verifyResetCode);
 
 //Reset Password with token
-authRouter.post("reset-password", resetPassword);
+authRouter.post("/reset-password", resetPassword);
 
 export = authRouter;

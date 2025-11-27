@@ -219,10 +219,20 @@ export const TextInput = forwardRef(
           )}
         </View>
 
-        {helperText && (
+        {error && typeof error === 'string' && (
           <Text
             variant="caption"
-            color={error ? "error" : "gray"}
+            color="error"
+            style={styles.helperText}
+          >
+            {error}
+          </Text>
+        )}
+
+        {helperText && !error && (
+          <Text
+            variant="caption"
+            color="gray"
             style={[styles.helperText, helperTextStyle]}
           >
             {helperText}

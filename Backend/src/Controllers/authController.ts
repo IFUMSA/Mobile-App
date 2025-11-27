@@ -4,9 +4,17 @@ import { User } from "../Models/User";
 import { Request, Response } from "express";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import jwt from "jsonwebtoken";
 import config from "../config";
 import { IUser } from "../Interfaces/user.interface";
 const salt = 10;
+
+// Generate JWT token
+const generateToken = (userId: string): string => {
+  return jwt.sign({ userId }, config.ACCESS_TOKEN_SECRET || "fallback-secret", {
+    expiresIn: "7d",
+  });
+};
 
 //Helper function to generate verification token
 const generateVerificationToken = (): string => {
@@ -18,13 +26,24 @@ const generateResetCode = (): string => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
 
+// Email transporter - uses Gmail in production, Ethereal in development
 const createTransporter = async () => {
-  // Create test account (no signup needed)
-  const testAccount = await nodemailer.createTestAccount();
+  // Use Gmail if credentials are provided
+  if (config.EMAIL_USER && config.EMAIL_PASSWORD) {
+    return nodemailer.createTransport({
+      host: config.EMAIL_HOST || "smtp.gmail.com",
+      port: parseInt(config.EMAIL_PORT || "587", 10),
+      secure: false,
+      auth: {
+        user: config.EMAIL_USER,
+        pass: config.EMAIL_PASSWORD,
+      },
+    });
+  }
 
-  // /**
-  // Create a transporter using the test account
-  const transporter = nodemailer.createTransport({
+  // Fallback to Ethereal for testing
+  const testAccount = await nodemailer.createTestAccount();
+  return nodemailer.createTransport({
     host: "smtp.ethereal.email",
     port: 587,
     secure: false,
@@ -33,8 +52,6 @@ const createTransporter = async () => {
       pass: testAccount.pass,
     },
   });
-
-  return transporter;
 };
 
 //Create A Nodemailer Transporter
@@ -103,32 +120,25 @@ export const createUser = async (req: Request, res: Response) => {
 
     const transporter = await createTransporter();
 
-    // Send mail with the transporter
+    // Send verification email
     const info = await transporter.sendMail({
-      from: '"Your App" <foo@example.com>',
+      from: config.EMAIL_FROM || `"IFUMSA" <${config.EMAIL_USER || "noreply@ifumsa.com"}>`,
       to: email,
-      subject: "Verify Your Email",
-      html: `<p>Click <a href="${verificationURL}">here</a> to verify</p>`,
+      subject: "Verify Your Email - IFUMSA",
+      html: `
+        <h1>Email Verification</h1>
+        <p>Hello ${firstName},</p>
+        <p>Thank you for registering! Please verify your email by clicking the link below:</p>
+        <a href="${verificationURL}" style="display: inline-block; padding: 12px 24px; background-color: #2A996B; color: white; text-decoration: none; border-radius: 8px;">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+        <p>If you didn't create an account, please ignore this email.</p>
+      `,
     });
 
-    // Log URL where you can see the email (it's not actually sent)
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-
-    //  */
-
-    //Send verification email
-    //   await transporter.sendMail({
-    //     from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
-    //     to: email,
-    //     subject: "Please Verify Your Email Address",
-    //     html: `
-    // <h1>Email Verification</h1>
-    // <p>Hello ${firstName},</p>
-    // <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
-    // <a href="${verificationURL}">Verify your email</a>
-    // <p>This link will expire in 24 hours</p>
-    // `,
-    //   });
+    // Log Ethereal preview URL in development
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) console.log("Preview URL:", previewUrl);
+    console.log("Verification email sent to:", email);
 
     //After verification email has been sent, save user details
     res.status(201).json({
@@ -241,32 +251,24 @@ export const resendVerificationEmail = async (req: Request, res: Response) => {
 
     const transporter = await createTransporter();
 
-    // Send mail with the transporter
+    // Send verification email
     const info = await transporter.sendMail({
-      from: '"Your App" <foo@example.com>',
+      from: config.EMAIL_FROM || `"IFUMSA" <${config.EMAIL_USER || "noreply@ifumsa.com"}>`,
       to: email,
-      subject: "Verify Your Email",
-      html: `<p>Click <a href="${verificationURL}">here</a> to verify</p>`,
+      subject: "Verify Your Email - IFUMSA",
+      html: `
+        <h1>Email Verification</h1>
+        <p>Hello ${user.firstName},</p>
+        <p>Please verify your email by clicking the link below:</p>
+        <a href="${verificationURL}" style="display: inline-block; padding: 12px 24px; background-color: #2A996B; color: white; text-decoration: none; border-radius: 8px;">Verify Email</a>
+        <p>This link will expire in 24 hours.</p>
+      `,
     });
 
-    // Log URL where you can see the email (it's not actually sent)
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-
-    //  */
-
-    //Send verification email
-    //   await transporter.sendMail({
-    //     from: `"IFUMSA Mobile APP" <${config.EMAIL_FROM}>`,
-    //     to: email,
-    //     subject: "Please Verify Your Email Address",
-    //     html: `
-    // <h1>Email Verification</h1>
-    // <p>Hello ${user.firstName},</p>
-    // <p>Thank You For Registering, Please verify your email by clicking the link below: </p>
-    // <a href="${verificationURL}">Verify your email</a>
-    // <p>This link will expire in 24 hours</p>
-    // `,
-    //   });
+    // Log Ethereal preview URL in development
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) console.log("Preview URL:", previewUrl);
+    console.log("Verification email resent to:", email);
     res.status(200).json({ message: "Verification Email Sent Successfully" });
     return;
 
@@ -307,11 +309,26 @@ export const signInUser = async (req: Request, res: Response) => {
       return;
     }
 
-    //Set Session Data
+    // Generate JWT token
+    const token = generateToken(user._id.toString());
+
+    // Also set session for backward compatibility
     req.session.userId = user._id;
     req.session.isAuthenticated = true;
 
-    res.status(200).json({ message: "Login Successful" });
+    res.status(200).json({
+      message: "Login Successful",
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        userName: user.userName,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        profilePic: user.profilePic,
+        bio: user.bio,
+      },
+    });
     return;
   } catch (error) {
     console.error("Login Error: ", error);
@@ -349,22 +366,23 @@ export const forgotPassword = async (req: Request, res: Response) => {
     const transporter = await createTransporter();
 
     const info = await transporter.sendMail({
-      from: '"Your App" <noreply@yourapp.com>',
+      from: config.EMAIL_FROM || `"IFUMSA" <${config.EMAIL_USER || "noreply@ifumsa.com"}>`,
       to: email,
-      subject: "Password Reset Code",
+      subject: "Password Reset Code - IFUMSA",
       html: `
-      <h1>Password Reset</h1>
-      <p>You requested a password reset for your account.</p>
-      <p>Your verification code is: <strong>${resetCode}</strong></p>
-      <p>This code will expire in 15 minutes.</p>
-      <p>If you didn't request this reset, please ignore this email.</p>
-    `,
+        <h1>Password Reset</h1>
+        <p>You requested a password reset for your account.</p>
+        <p>Your verification code is:</p>
+        <h2 style="background-color: #f0f0f0; padding: 16px; text-align: center; letter-spacing: 8px; font-size: 32px;">${resetCode}</h2>
+        <p>This code will expire in 15 minutes.</p>
+        <p>If you didn't request this reset, please ignore this email.</p>
+      `,
     });
 
-    // For development, log the preview URL
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-    }
+    // Log Ethereal preview URL in development
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) console.log("Preview URL:", previewUrl);
+    console.log("Password reset code sent to:", email);
 
     res.status(200).json({
       message:
@@ -443,8 +461,9 @@ export const resetPassword = async (req: Request, res: Response) => {
     }
 
     // Update password and clear reset fields
-    // Note: You would hash this password before saving
-    user.password = newPassword; // Assuming you hash before saving in your model
+    // Hash the new password before saving
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    user.password = hashedPassword;
     user.resetCode = null;
     user.resetCodeExpires = null;
     user.resetToken = null;

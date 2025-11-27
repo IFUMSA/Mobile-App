@@ -13,6 +13,8 @@ const baseColors = {
   error: "#F84F4F",
   grayLight: "#D9D9D9",
   pending: "#F79E1B",
+  disabled: "#A0A0A0",
+  disabledText: "#666666",
 };
 
 const createAlphaVariants = (hexColor, alphaLevels) => {

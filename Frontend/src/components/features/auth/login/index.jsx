@@ -1,51 +1,82 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, Pressable } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { TextInput } from '@components/ui/Input';
 import { Button } from '@components/ui/button';
 import { Text } from '@components/ui/Text';
-import { useRouter } from 'expo-router';
+import { useSigninMutation } from '@api';
+import { useAuth } from '@hooks/use-auth';
+import { loginSchema } from '@lib/validations';
 
 const LoginForm = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const router = useRouter();
+  const { setAuthData } = useAuth();
 
-  const handleLogin = () => {
-    // Handle login logic here
-    console.log('Login with:', { email, password });
-    router.push('/home');
-  };
+  const { control, handleSubmit, formState: { errors } } = useForm({
+    resolver: zodResolver(loginSchema),
+    mode: 'onChange',
+    defaultValues: { email: '', password: '' },
+  });
+
+  const { mutate: signin, isPending: isLoading, error: apiError } = useSigninMutation({
+    onSuccess: async (data) => {
+      // Store token and user in context
+      await setAuthData({ token: data.token, user: data.user });
+      router.replace('/home');
+    },
+  });
+
+  const onSubmit = (data) => signin(data);
 
   return (
     <View style={styles.container}>
-      <Text variant="heading">
-        Login
-      </Text>
+      <Text variant="heading">Login</Text>
+
+      {apiError && (
+        <Text variant="body2" style={styles.errorText}>
+          {apiError.message?.includes('Not Verified')
+            ? 'Please verify your email before logging in'
+            : apiError.message || 'Login failed. Please try again.'}
+        </Text>
+      )}
 
       <View style={styles.inputsContainer}>
-        <TextInput
-          placeholder="Enter Your Email"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-          label="Email"
+        <Controller
+          control={control}
+          name="email"
+          render={({ field: { onChange, value } }) => (
+            <TextInput
+              placeholder="Enter Your Email"
+              value={value}
+              onChangeText={onChange}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              label="Email"
+              error={errors.email?.message}
+            />
+          )}
         />
         <View>
-          <TextInput
-            placeholder="Enter Your Password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            label="Password"
+          <Controller
+            control={control}
+            name="password"
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                placeholder="Enter Your Password"
+                value={value}
+                onChangeText={onChange}
+                secureTextEntry
+                label="Password"
+                error={errors.password?.message}
+              />
+            )}
           />
 
           <Link href="/(auth)/(recovery)/forgot-password" asChild>
             <Pressable style={styles.forgotPasswordContainer}>
-              <Text variant="body2">
-                Forgot Password?
-              </Text>
+              <Text variant="body2">Forgot Password?</Text>
             </Pressable>
           </Link>
         </View>
@@ -55,7 +86,8 @@ const LoginForm = () => {
         variant="secondary"
         fullWidth
         style={styles.loginButton}
-        onPress={handleLogin}
+        onPress={handleSubmit(onSubmit)}
+        loading={isLoading}
       >
         Login
       </Button>
@@ -97,6 +129,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 24,
+  },
+  errorText: {
+    color: '#dc2626',
+    marginTop: 12,
   },
 });
 
