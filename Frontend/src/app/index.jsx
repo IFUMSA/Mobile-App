@@ -1,11 +1,13 @@
 import { View, StyleSheet, Image, Animated, StatusBar } from "react-native";
 import { Text } from "@components/ui/Text";
 import { useTheme } from "@hooks/use-theme";
-import { useLayoutEffect, useRef, useState, useEffect, useCallback } from "react";
+import { useLayoutEffect, useRef, useState, useEffect, useCallback, useContext } from "react";
 import { useRouter } from "expo-router";
+import { AuthContext } from "@context/auth-context";
 
 export default function LandingScreen() {
   const { theme } = useTheme();
+  const { isAuthenticated, isLoading, user } = useContext(AuthContext);
   const [currentScreen, setCurrentScreen] = useState(0);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -15,6 +17,20 @@ export default function LandingScreen() {
   const finalScreenIndex = 1;
 
   const router = useRouter();
+
+  // Check auth state and redirect accordingly
+  useEffect(() => {
+    if (isLoading) return; // Wait for auth to load
+    
+    if (isAuthenticated && user) {
+      // Check if user has completed onboarding (or skipped it)
+      if (!user.hasCompletedOnboarding) {
+        router.replace('/(onboarding)/profile');
+      } else {
+        router.replace('/home');
+      }
+    }
+  }, [isAuthenticated, isLoading, user, router]);
 
   const animateToNextScreen = useCallback(() => {
     if (isAnimating) return;

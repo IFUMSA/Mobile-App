@@ -2,6 +2,8 @@ import React, { createContext, useState, useEffect, useMemo, useCallback } from 
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import * as authService from '../services/auth';
+import * as userService from '../services/user';
+import { setOnUnauthorized } from '../services/api';
 
 // Storage helper that works on both web and native
 const storage = {
@@ -35,6 +37,20 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Handle auto-logout when API returns 401
+  const handleUnauthorized = useCallback(() => {
+    console.log('Auto-logout triggered by 401 response');
+    setToken(null);
+    setUser(null);
+    setIsAuthenticated(false);
+  }, []);
+
+  // Register the unauthorized callback with the API service
+  useEffect(() => {
+    setOnUnauthorized(handleUnauthorized);
+    return () => setOnUnauthorized(null);
+  }, [handleUnauthorized]);
+
   // Load stored auth data on app start
   useEffect(() => {
     loadStoredAuth();
@@ -44,7 +60,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const storedToken = await storage.getItem('authToken');
       const storedUser = await storage.getItem('user');
-      
+
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
@@ -60,15 +76,15 @@ export const AuthProvider = ({ children }) => {
   // Sign in
   const signin = useCallback(async ({ email, password }) => {
     const response = await authService.signin({ email, password });
-    
+
     // Store token and user data
     await storage.setItem('authToken', response.token);
     await storage.setItem('user', JSON.stringify(response.user));
-    
+
     setToken(response.token);
     setUser(response.user);
     setIsAuthenticated(true);
-    
+
     return response;
   }, []);
 
@@ -101,7 +117,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.log('Error clearing auth data:', error);
     }
-    
+
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
@@ -127,6 +143,27 @@ export const AuthProvider = ({ children }) => {
     return await authService.resendVerification(email);
   }, []);
 
+  // Update user profile
+  const updateProfile = useCallback(async (profileData) => {
+    const response = await userService.updateProfile(profileData);
+
+    // Update stored user data
+    const updatedUser = response.user;
+    await storage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+
+    return response;
+  }, []);
+
+  // Refresh user profile from server
+  const refreshProfile = useCallback(async () => {
+    const response = await userService.getProfile();
+    const updatedUser = response.user;
+    await storage.setItem('user', JSON.stringify(updatedUser));
+    setUser(updatedUser);
+    return response;
+  }, []);
+
   const contextValue = useMemo(
     () => ({
       user,
@@ -141,8 +178,10 @@ export const AuthProvider = ({ children }) => {
       verifyResetCode,
       resetPassword,
       resendVerification,
+      updateProfile,
+      refreshProfile,
     }),
-    [user, token, isLoading, isAuthenticated, setAuthData, signin, signup, signout, forgotPassword, verifyResetCode, resetPassword, resendVerification]
+    [user, token, isLoading, isAuthenticated, setAuthData, signin, signup, signout, forgotPassword, verifyResetCode, resetPassword, resendVerification, updateProfile, refreshProfile]
   );
 
   return (

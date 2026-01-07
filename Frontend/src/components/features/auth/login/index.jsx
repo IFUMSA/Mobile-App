@@ -24,7 +24,13 @@ const LoginForm = () => {
     onSuccess: async (data) => {
       // Store token and user in context
       await setAuthData({ token: data.token, user: data.user });
-      router.replace('/home');
+      
+      // Check if user has completed onboarding (or skipped it)
+      if (!data.user.hasCompletedOnboarding) {
+        router.replace('/(onboarding)/profile');
+      } else {
+        router.replace('/home');
+      }
     },
   });
 

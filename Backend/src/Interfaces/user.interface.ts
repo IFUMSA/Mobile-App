@@ -1,6 +1,7 @@
-import { Document } from "mongoose";
+import { Document, Types } from "mongoose";
 
 export interface IUser extends Document {
+  _id: Types.ObjectId;
   email: string;
   password: string;
   userName: string;
@@ -15,4 +16,5 @@ export interface IUser extends Document {
   resetTokenExpires: Date;
   bio: string;
   profilePic: string;
+  hasCompletedOnboarding: boolean;
 }

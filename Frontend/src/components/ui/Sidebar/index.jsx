@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext, useRef, useEffect, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -10,10 +10,8 @@ import {
   Platform,
 } from "react-native";
 import { Text } from "@components/ui/Text";
-import { useTheme } from "@hooks/use-theme";
 import { useRouter } from "expo-router";
-// import Feather from "@expo/vector-icons/Feather";
-// import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import { AuthContext } from "@context/auth-context";
 
 const { width: screenWidth } = Dimensions.get("window");
 const SIDEBAR_WIDTH = screenWidth * 0.5;
@@ -33,12 +31,73 @@ const navigationItems = [
   },
 ];
 
-const Sidebar = ({ visible, onClose }) => {
-  const { theme } = useTheme();
-  const router = useRouter();
-  const translateX = React.useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+// Static styles
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
+  },
+  sidebar: {
+    width: SIDEBAR_WIDTH,
+    height: "100%",
+    backgroundColor: "#FFFFFF",
+    paddingTop: 53,
+    paddingHorizontal: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#000",
+        shadowOffset: { width: 2, height: 0 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+      },
+      android: {
+        elevation: 16,
+      },
+    }),
+  },
+  profileSection: {
+    alignItems: "center",
+    marginBottom: 37,
+  },
+  profileImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 40,
+    marginBottom: 4,
+  },
+  navigation: {
+    flex: 1,
+  },
+  navItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  navIcon: {
+    marginRight: 12,
+    width: 24,
+    height: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  logoutItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 40,
+  },
+});
 
-  React.useEffect(() => {
+const Sidebar = ({ visible, onClose }) => {
+  const router = useRouter();
+  const authContext = useContext(AuthContext);
+  const translateX = useRef(new Animated.Value(-SIDEBAR_WIDTH)).current;
+
+  const user = authContext?.user;
+  const signout = authContext?.signout;
+
+  useEffect(() => {
     if (visible) {
       translateX.setValue(-SIDEBAR_WIDTH);
       Animated.timing(translateX, {
@@ -47,9 +106,9 @@ const Sidebar = ({ visible, onClose }) => {
         useNativeDriver: true,
       }).start();
     }
-  }, [visible, translateX]);
+  }, [visible]);
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
     Animated.timing(translateX, {
       toValue: -SIDEBAR_WIDTH,
       duration: 300,
@@ -57,86 +116,43 @@ const Sidebar = ({ visible, onClose }) => {
     }).start(() => {
       onClose();
     });
-  };
+  }, [onClose, translateX]);
 
-  const handleNavigation = (route) => {
+  const handleNavigation = useCallback((route) => {
     handleClose();
-    router.push(route);
-  };
+    setTimeout(() => {
+      router.push(route);
+    }, 350);
+  }, [handleClose, router]);
 
-  //   const renderIcon = (iconType, iconName, color) => {
-  //     const iconProps = {
-  //       name: iconName,
-  //       size: 20,
-  //       color,
-  //     };
+  const handleLogout = useCallback(() => {
+    handleClose();
+    setTimeout(() => {
+      if (signout) signout();
+      router.replace("/");
+    }, 350);
+  }, [handleClose, signout, router]);
 
-  //     switch (iconType) {
-  //       case 'Feather':
-  //         return <Feather {...iconProps} />;
-  //       case 'MaterialIcons':
-  //         return <MaterialIcons {...iconProps} />;
-  //       default:
-  //         return <Feather {...iconProps} />;
-  //     }
-  //   };
+  // Get user display name
+  const displayName = user
+    ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.userName || "User"
+    : "Guest";
 
-  const styles = StyleSheet.create({
-    overlay: {
-      flex: 1,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      justifyContent: "flex-start",
-      alignItems: "flex-start",
-    },
-    sidebar: {
-      width: SIDEBAR_WIDTH,
-      height: "100%",
-      backgroundColor: theme.colors.white,
-      paddingTop: 53,
-      paddingHorizontal: 16,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#000",
-          shadowOffset: { width: 2, height: 0 },
-          shadowOpacity: 0.25,
-          shadowRadius: 10,
-        },
-        android: {
-          elevation: 16,
-        },
-      }),
-    },
-    profileSection: {
-      alignItems: "center",
-      marginBottom: 37,
-    },
-    profileImage: {
-      width: 64,
-      height: 64,
-      borderRadius: 40,
-      marginBottom: 4,
-    },
-    navItem: {
-      flexDirection: "row",
-      alignItems: "center",
-      marginBottom: 12,
-    },
+  // Get profile image
+  const profileImage = user?.profilePic
+    ? { uri: user.profilePic }
+    : require("@assets/icons/profile-icon.png");
 
-    navIcon: {
-      marginRight: 12,
-      width: 24,
-      height: 24,
-      justifyContent: "center",
-      alignItems: "center",
-    },
-  });
+  if (!visible) {
+    return null;
+  }
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       statusBarTranslucent
     >
       <Pressable style={styles.overlay} onPress={handleClose}>
@@ -150,18 +166,18 @@ const Sidebar = ({ visible, onClose }) => {
         >
           <View style={styles.profileSection}>
             <Image
-              source={require("@assets/icons/profile-icon.png")}
+              source={profileImage}
               style={styles.profileImage}
             />
             <Text variant="caption" textTransform="capitalize">
-              ajayi ojo olatunde
+              {displayName}
             </Text>
           </View>
           <View style={styles.navigation}>
             {navigationItems.map((item) => (
               <Pressable
                 key={item.id}
-                style={({ pressed }) => [styles.navItem]}
+                style={styles.navItem}
                 onPress={() => handleNavigation(item.route)}
               >
                 <View style={styles.navIcon}>
@@ -171,6 +187,9 @@ const Sidebar = ({ visible, onClose }) => {
               </Pressable>
             ))}
           </View>
+          <Pressable style={styles.logoutItem} onPress={handleLogout}>
+            <Text variant="caption" color="error">Logout</Text>
+          </Pressable>
         </Animated.View>
       </Pressable>
     </Modal>

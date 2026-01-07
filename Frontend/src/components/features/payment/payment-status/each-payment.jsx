@@ -8,18 +8,27 @@ import { StyleSheet } from "react-native";
 const EachPayment = ({ title, amount, date, status }) => {
   const { theme } = useTheme();
 
-  const statusColor = (() => {
+  // Map status to color and display text
+  const getStatusInfo = () => {
     switch (status) {
+      case "completed":
       case "success":
-        return theme.colors.success;
+        return { color: theme.colors.success, label: "Completed" };
+      case "confirmed":
+        return { color: theme.colors.success, label: "Confirmed" };
+      case "submitted":
+        return { color: theme.colors.info || "#3B82F6", label: "Under Review" };
       case "pending":
-        return theme.colors.warning;
+        return { color: theme.colors.warning, label: "Pending" };
+      case "rejected":
       case "failed":
-        return theme.colors.error;
+        return { color: theme.colors.error, label: "Rejected" };
       default:
-        return theme.colors.success;
+        return { color: theme.colors.gray, label: status };
     }
-  })();
+  };
+
+  const { color: statusColor, label: statusLabel } = getStatusInfo();
 
   return (
     <View
@@ -29,11 +38,16 @@ const EachPayment = ({ title, amount, date, status }) => {
       ]}
     >
       <Container style={styles.container}>
-        <View>
+        <View style={styles.leftContent}>
           <Text variant="body2">{title}</Text>
           <Text variant="caption" fontSize={10}>
             {date}
           </Text>
+          <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+            <Text variant="caption" fontSize={10} style={{ color: statusColor }}>
+              {statusLabel}
+            </Text>
+          </View>
         </View>
         <View style={styles.amountContainer}>
           <MaterialCommunityIcons
@@ -41,7 +55,7 @@ const EachPayment = ({ title, amount, date, status }) => {
             size={24}
             color={statusColor}
           />
-          <Text variant="body" fontSize={20} lineHeight="28" color={statusColor}>
+          <Text variant="body" fontSize={20} lineHeight="28" style={{ color: statusColor }}>
             {amount}
           </Text>
         </View>
@@ -60,7 +74,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 6,
+    paddingVertical: 10,
+  },
+  leftContent: {
+    flex: 1,
+  },
+  statusBadge: {
+    alignSelf: "flex-start",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginTop: 4,
   },
   amountContainer: {
     flexDirection: "row",

@@ -2,10 +2,12 @@ import React from "react";
 import StatusSelect from "./index";
 
 const paymentStatusOptions = [
-  { value: "all", label: "All status" },
-  { value: "successful", label: "Successful" },
-  { value: "failed", label: "Failed" },
+  { value: "all", label: "All Payments" },
   { value: "pending", label: "Pending" },
+  { value: "submitted", label: "Under Review" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "completed", label: "Completed" },
+  { value: "rejected", label: "Rejected" },
 ];
 
 const PaymentStatusSelect = ({ value, onValueChange, style }) => {

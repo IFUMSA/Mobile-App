@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, StyleSheet, Platform, Pressable } from "react-native";
 import { useTheme } from "@hooks/use-theme";
 import AnnouncementCarousel from "./announcement-carousel";
@@ -9,10 +9,14 @@ import Container from "@components/ui/container";
 import { Text } from "@components/ui/Text";
 import NavigationLinks from "./navigation-links";
 import Sidebar from "@components/ui/Sidebar";
+import { useNextEvent } from "@hooks/api/use-content";
 
 const Home = () => {
   const { theme } = useTheme();
   const [sidebarVisible, setSidebarVisible] = useState(false);
+  
+  // Fetch next event from API
+  const { data: eventData, isLoading: eventLoading } = useNextEvent();
 
   const openSidebar = () => {
     setSidebarVisible(true);
@@ -21,6 +25,20 @@ const Home = () => {
   const closeSidebar = () => {
     setSidebarVisible(false);
   };
+
+  // Format event data for EventCard
+  const nextEvent = useMemo(() => {
+    if (!eventData?.event) return null;
+    const event = eventData.event;
+    const startDate = new Date(event.startDate);
+    return {
+      title: event.title,
+      location: event.location || "TBA",
+      time: startDate.toLocaleTimeString('en-NG', { hour: '2-digit', minute: '2-digit' }),
+      date: startDate.toLocaleDateString('en-NG', { day: '2-digit', month: '2-digit', year: '2-digit' }),
+      image: event.image ? { uri: event.image } : undefined,
+    };
+  }, [eventData]);
 
   return (
     <View style={[styles.container]}>
@@ -40,7 +58,17 @@ const Home = () => {
         <Text variant="heading2" fontWeight="600" style={{ marginTop: 36 }}>
           Next Event
         </Text>
-        <EventCard />
+        {nextEvent ? (
+          <EventCard
+            title={nextEvent.title}
+            location={nextEvent.location}
+            time={nextEvent.time}
+            date={nextEvent.date}
+            image={nextEvent.image}
+          />
+        ) : (
+          <EventCard />
+        )}
         <NavigationLinks />
       </Container>
       <Sidebar 

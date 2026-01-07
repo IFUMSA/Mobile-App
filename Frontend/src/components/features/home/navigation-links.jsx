@@ -11,14 +11,14 @@ const links = [
     href: "/study",
   },
   {
-    label: "Marketplace",
+    label: "Synopses",
     icon: require("@assets/icons/Shop.png"),
-    href: "/marketplace",
+    href: "/synopses",
   },
   {
-    label: "Upcoming Events",
+    label: "Cart",
     icon: require("@assets/icons/upcoming-events.png"),
-    href: "/upcoming-events",
+    href: "/cart",
   },
 ];
 

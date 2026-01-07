@@ -1,13 +1,17 @@
 import * as React from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { Dimensions, StyleSheet, View, ActivityIndicator, Alert } from "react-native";
 import { useSharedValue } from "react-native-reanimated";
 import Carousel, { Pagination } from "react-native-reanimated-carousel";
 import { useTheme } from "@hooks/use-theme";
 import { Text } from "@components/ui/Text";
 import { Platform } from "react-native";
 import { Button } from "@components/ui/button";
+import { useRouter } from "expo-router";
+import { useAnnouncements } from "@hooks/api/use-content";
+import { useAnnualDuesMutation } from "@hooks/api/use-payment";
 
-const data = [
+// Fallback data if API fails or returns empty
+const fallbackData = [
   {
     id: 0,
     title: "Have You Paid Your Annual Dues?",
@@ -23,31 +27,60 @@ const data = [
     title: "Access to The IFUMSA Edu-Stipend Fund",
     description: "Supporting 100 medical students with 20,000 Naira each ",
   },
-  {
-    id: 3,
-    title: "Exclusive Discounts and Priority Access",
-    description:
-      "Enjoy special offers and first-hand opportunities in IFUMSA-led trainings, events and partnership",
-  },
-  {
-    id: 4,
-    title: "A Voice in IFUMSA",
-    description:
-      "Your dues keep the association running, ensuring your concerns and needs are addressed",
-  },
 ];
 const width = Dimensions.get("window").width - 48;
 
 function AnnouncementCarousel() {
   const { theme } = useTheme();
+  const router = useRouter();
   const ref = React.useRef(null);
   const progress = useSharedValue(0);
+  
+  // Fetch announcements from API
+  const { data: announcementsData, isLoading } = useAnnouncements();
+  
+  // Annual dues mutation
+  const { mutate: createAnnualDues, isPending: isCreatingDues } = useAnnualDuesMutation({
+    onSuccess: (data) => {
+      // Navigate to bank transfer page with payment details
+      router.push({
+        pathname: '/payment/bank-transfer',
+        params: { 
+          paymentId: data.payment.id,
+          reference: data.payment.reference,
+          amount: data.payment.amount,
+          title: data.payment.title,
+        }
+      });
+    },
+    onError: (error) => {
+      Alert.alert('Error', error.message || 'Failed to create payment');
+    },
+  });
+  
+  // Use API data or fallback
+  const data = React.useMemo(() => {
+    if (announcementsData?.announcements?.length > 0) {
+      return announcementsData.announcements.map((item, index) => ({
+        id: item._id || index,
+        title: item.title,
+        description: item.description || '',
+        link: item.link,
+      }));
+    }
+    return fallbackData;
+  }, [announcementsData]);
 
   const onPressPagination = (index) => {
     ref.current?.scrollTo({
       count: index - progress.value,
       animated: true,
     });
+  };
+
+  const handlePayNow = () => {
+    // Create annual dues payment and navigate to bank transfer
+    createAnnualDues('bank');
   };
 
   return (
@@ -104,6 +137,8 @@ function AnnouncementCarousel() {
           size="small"
           style={{ paddingVertical: 7, paddingHorizontal: 14 }}
           textStyle={{ fontSize: 10 }}
+          onPress={handlePayNow}
+          loading={isCreatingDues}
         >
           Pay Now
         </Button>

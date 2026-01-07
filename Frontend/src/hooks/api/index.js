@@ -11,7 +11,57 @@ export {
   useResendVerificationMutation,
 } from './use-auth-mutations';
 
-// Feature-specific hooks will be added here as you build features:
-// export { useEvents } from './use-events';
-// export { useAnnouncements } from './use-announcements';
-// export { useProfile } from './use-profile';
+// Quiz hooks
+export {
+  useQuizzes,
+  useQuizCategories,
+  useQuiz,
+  useQuizHistory,
+  useSubmitQuizMutation,
+} from './use-quiz';
+
+// Product hooks
+export {
+  useProducts,
+  useProductCategories,
+  useProduct,
+} from './use-products';
+
+// Cart hooks
+export {
+  useCart,
+  useAddToCartMutation,
+  useUpdateCartItemMutation,
+  useRemoveFromCartMutation,
+  useClearCartMutation,
+} from './use-cart';
+
+// Study hooks
+export {
+  useUserQuizzes,
+  useUserQuiz,
+  useSaveQuizMutation,
+  useUpdateQuizMutation,
+  useDeleteQuizMutation,
+} from './use-study';
+
+// Payment hooks
+export {
+  usePaymentHistory,
+  usePayment,
+} from './use-payment';
+
+// Profile hooks
+export {
+  useProfile,
+  useUser,
+  useUpdateProfileMutation,
+} from './use-profile';
+
+// Card hooks
+export {
+  useCards,
+  useSaveCardMutation,
+  useSetDefaultCardMutation,
+  useDeleteCardMutation,
+} from './use-cards';

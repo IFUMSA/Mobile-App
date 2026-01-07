@@ -313,7 +313,7 @@ export const signInUser = async (req: Request, res: Response) => {
     const token = generateToken(user._id.toString());
 
     // Also set session for backward compatibility
-    req.session.userId = user._id;
+    req.session.userId = user._id.toString();
     req.session.isAuthenticated = true;
 
     res.status(200).json({
@@ -327,6 +327,7 @@ export const signInUser = async (req: Request, res: Response) => {
         lastName: user.lastName,
         profilePic: user.profilePic,
         bio: user.bio,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     });
     return;

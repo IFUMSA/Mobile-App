@@ -8,17 +8,33 @@ import * as SecureStore from 'expo-secure-store';
 const API_BASE_URL = 'http://172.20.10.2:5000';
 
 // Storage helper for cross-platform support
-const getToken = async () => {
-  if (Platform.OS === 'web') {
-    return localStorage.getItem('authToken');
-  }
-  return await SecureStore.getItemAsync('authToken');
+const storage = {
+  async getItem(key) {
+    if (Platform.OS === 'web') {
+      return localStorage.getItem(key);
+    }
+    return await SecureStore.getItemAsync(key);
+  },
+  async removeItem(key) {
+    if (Platform.OS === 'web') {
+      localStorage.removeItem(key);
+      return;
+    }
+    await SecureStore.deleteItemAsync(key);
+  },
+};
+
+// Logout callback - will be set by AuthProvider
+let onUnauthorized = null;
+
+export const setOnUnauthorized = (callback) => {
+  onUnauthorized = callback;
 };
 
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 60000, // Increased to 60 seconds for AI calls
   headers: {
     'Content-Type': 'application/json',
   },
@@ -28,7 +44,7 @@ const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     try {
-      const token = await getToken();
+      const token = await storage.getItem('authToken');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -42,27 +58,37 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - handle common errors
+// Response interceptor - handle common errors and auto-logout on 401
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
     if (error.response) {
-      // Server responded with error status
       const { status, data } = error.response;
-      
+
       if (status === 401) {
-        // Token expired or invalid - could trigger logout here
-        console.log('Unauthorized - token may be expired');
+        // Token expired or invalid - trigger auto-logout
+        console.log('Unauthorized - triggering auto-logout');
+
+        // Clear stored credentials
+        try {
+          await storage.removeItem('authToken');
+          await storage.removeItem('user');
+        } catch (e) {
+          console.log('Error clearing auth data:', e);
+        }
+
+        // Notify auth context to update state
+        if (onUnauthorized) {
+          onUnauthorized();
+        }
       }
-      
-      // Return a consistent error format
+
       return Promise.reject({
         status,
         message: data.message || 'An error occurred',
         errors: data.errors || [],
       });
     } else if (error.request) {
-      // Request made but no response received
       return Promise.reject({
         status: 0,
         message: 'Network error - please check your connection',
