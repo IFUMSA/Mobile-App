@@ -21,9 +21,9 @@ export const useAddToCartMutation = (options = {}) => {
 
   return useMutation({
     mutationFn: cartService.addToCart,
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: cartKeys.all });
-      options.onSuccess?.(data);
+      options.onSuccess?.(data, variables);
     },
     onError: (error) => {
       options.onError?.(error);

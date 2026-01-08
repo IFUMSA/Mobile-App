@@ -11,14 +11,14 @@ const links = [
     href: "/study",
   },
   {
-    label: "Synopses",
+    label: "Marketplace",
     icon: require("@assets/icons/Shop.png"),
-    href: "/synopses",
+    href: "/marketplace",
   },
   {
-    label: "Cart",
+    label: "Events",
     icon: require("@assets/icons/upcoming-events.png"),
-    href: "/cart",
+    href: "/events",
   },
 ];
 
@@ -87,7 +87,7 @@ const NavigationLinks = () => {
               {link.label}
             </Text>
             <Image source={link.icon} style={styles.icon} />
-            <View style={styles.linkIconOverlay}> 
+            <View style={styles.linkIconOverlay}>
             </View>
           </Pressable>
         ))}

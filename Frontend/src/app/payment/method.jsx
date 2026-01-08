@@ -33,12 +33,12 @@ const PaymentMethodScreen = () => {
   });
 
   const paymentMethods = [
-    {
-      id: 'card',
-      label: 'Card',
-      icon: 'credit-card',
-      description: 'Pay with debit/credit card',
-    },
+    // {
+    //   id: 'card',
+    //   label: 'Card',
+    //   icon: 'credit-card',
+    //   description: 'Pay with debit/credit card',
+    // },
     {
       id: 'bank',
       label: 'Bank Transfer',
@@ -198,7 +198,8 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   footer: {
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
   },
 });
 

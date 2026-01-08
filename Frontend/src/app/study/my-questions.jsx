@@ -185,7 +185,7 @@ const MyQuestionsScreen = () => {
         <View style={styles.quizMeta}>
           <View style={styles.questionCount}>
             <Text variant="caption" fontWeight="600" color="secondary">
-              {item.questions?.length || 0}
+              {item.questionCount || item.questions?.length || 0}
             </Text>
             <Text variant="caption" color="gray"> questions</Text>
           </View>

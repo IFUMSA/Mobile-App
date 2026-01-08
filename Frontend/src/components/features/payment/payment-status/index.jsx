@@ -75,6 +75,7 @@ const PaymentStatus = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingHorizontal: 16,
   },
   loadingContainer: {
     flex: 1,
@@ -92,7 +93,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   listContent: {
-    paddingBottom: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
   },
 });
 

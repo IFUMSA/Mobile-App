@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui/image-upload";
 import {
     Dialog,
     DialogContent,
@@ -203,12 +204,11 @@ export default function EventsPage() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="image">Image URL (optional)</Label>
-                                <Input
-                                    id="image"
-                                    type="url"
+                                <Label>Event Image (optional)</Label>
+                                <ImageUpload
                                     value={formData.image}
-                                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
+                                    onChange={(url) => setFormData({ ...formData, image: url })}
+                                    folder="events"
                                 />
                             </div>
                             <div className="flex items-center gap-2">

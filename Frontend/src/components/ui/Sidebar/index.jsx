@@ -24,6 +24,12 @@ const navigationItems = [
     route: "/profile",
   },
   {
+    id: "cart",
+    label: "Cart",
+    icon: require("@assets/icons/Shop.png"),
+    route: "/cart",
+  },
+  {
     id: "payment-status",
     label: "Payment Status",
     icon: require("@assets/icons/payment.png"),
@@ -125,13 +131,28 @@ const Sidebar = ({ visible, onClose }) => {
     }, 350);
   }, [handleClose, router]);
 
-  const handleLogout = useCallback(() => {
-    handleClose();
-    setTimeout(() => {
-      if (signout) signout();
-      router.replace("/");
-    }, 350);
-  }, [handleClose, signout, router]);
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+
+  const handleLogout = useCallback(async () => {
+    if (isLoggingOut) return; // Prevent multiple clicks
+    setIsLoggingOut(true);
+
+    try {
+      // First signout (clear auth data)
+      if (signout) await signout();
+
+      // Close sidebar
+      handleClose();
+
+      // Navigate to login after a brief delay for animation
+      setTimeout(() => {
+        router.replace("/");
+      }, 100);
+    } catch (error) {
+      console.error('Logout error:', error);
+      setIsLoggingOut(false);
+    }
+  }, [handleClose, signout, router, isLoggingOut]);
 
   // Get user display name
   const displayName = user
@@ -181,7 +202,7 @@ const Sidebar = ({ visible, onClose }) => {
                 onPress={() => handleNavigation(item.route)}
               >
                 <View style={styles.navIcon}>
-                  <Image source={item.icon} resizeMode="contain" />
+                  <Image source={item.icon} style={{ width: 20, height: 20 }} resizeMode="contain" />
                 </View>
                 <Text variant="caption">{item.label}</Text>
               </Pressable>

@@ -18,7 +18,9 @@ export default function ProfileSetup() {
 
   const [firstName, setFirstName] = useState(user?.firstName || "");
   const [lastName, setLastName] = useState(user?.lastName || "");
-  const [bio, setBio] = useState(user?.bio || "");
+  const [studentClass, setStudentClass] = useState(user?.studentClass || "");
+  const [matricNumber, setMatricNumber] = useState(user?.matricNumber || "");
+  const [phone, setPhone] = useState(user?.phone || "");
   const [profilePic, setProfilePic] = useState(user?.profilePic || null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -41,7 +43,9 @@ export default function ProfileSetup() {
       const profileData = {
         firstName: firstName.trim(),
         lastName: lastName.trim(),
-        bio: bio.trim(),
+        studentClass: studentClass.trim(),
+        matricNumber: matricNumber.trim(),
+        phone: phone.trim(),
         hasCompletedOnboarding: true, // Mark onboarding as complete
       };
 
@@ -123,13 +127,26 @@ export default function ProfileSetup() {
             icon={require("@assets/icons/iconamoon_profile.png")}
           />
           <ProfileSetupInput
-            label="Bio"
-            placeholder="Tell us about yourself (optional)"
-            value={bio}
-            onChangeText={setBio}
-            multiline
-            numberOfLines={3}
+            label="Class"
+            placeholder="e.g. 300L, 400L"
+            value={studentClass}
+            onChangeText={setStudentClass}
             icon={require("@assets/icons/mdi_university-outline.png")}
+          />
+          <ProfileSetupInput
+            label="Matric Number"
+            placeholder="Enter your matric number"
+            value={matricNumber}
+            onChangeText={setMatricNumber}
+            icon={require("@assets/icons/mdi_university-outline.png")}
+          />
+          <ProfileSetupInput
+            label="Phone Number"
+            placeholder="Enter your phone number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            icon={require("@assets/icons/iconamoon_profile.png")}
           />
         </View>
         <Button

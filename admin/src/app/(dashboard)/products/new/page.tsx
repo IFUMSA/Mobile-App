@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { api } from "@/lib/api";
@@ -32,9 +33,19 @@ export default function NewProductPage() {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const handleImageChange = (url: string) => {
+        setFormData({ ...formData, image: url });
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (!formData.image) {
+            setError("Please upload a product image");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -79,6 +90,15 @@ export default function NewProductPage() {
                                 {error}
                             </div>
                         )}
+
+                        <div className="space-y-2">
+                            <Label>Product Image *</Label>
+                            <ImageUpload
+                                value={formData.image}
+                                onChange={handleImageChange}
+                                folder="products"
+                            />
+                        </div>
 
                         <div className="space-y-2">
                             <Label htmlFor="title">Title *</Label>
@@ -149,19 +169,6 @@ export default function NewProductPage() {
                                 name="author"
                                 value={formData.author}
                                 onChange={handleChange}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label htmlFor="image">Image URL *</Label>
-                            <Input
-                                id="image"
-                                name="image"
-                                type="url"
-                                placeholder="https://..."
-                                value={formData.image}
-                                onChange={handleChange}
-                                required
                             />
                         </div>
 

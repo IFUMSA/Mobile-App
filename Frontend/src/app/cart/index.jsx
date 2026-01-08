@@ -222,8 +222,8 @@ const styles = StyleSheet.create({
   },
   footer: {
     paddingTop: 16,
+    paddingBottom: 24,
     borderTopWidth: 1,
-    marginTop: 'auto',
   },
   totalContainer: {
     flexDirection: 'row',

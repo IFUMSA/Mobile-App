@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, Image, Pressable, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Text } from '@components/ui/Text';
-import { TextInput } from '@components/ui/Input';
+import { ProfileSetupInput } from '@components/ui/Input/profile-setup';
 import { Button } from '@components/ui/button';
 import Container from '@components/ui/container';
 import PageHeader from '@components/ui/PageHeader';
@@ -29,16 +29,18 @@ const EditProfileScreen = () => {
 
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [userName, setUserName] = useState('');
-  const [bio, setBio] = useState('');
+  const [studentClass, setStudentClass] = useState('');
+  const [matricNumber, setMatricNumber] = useState('');
+  const [phone, setPhone] = useState('');
   const [profilePic, setProfilePic] = useState(null);
 
   useEffect(() => {
     if (profileData?.user) {
       setFirstName(profileData.user.firstName || '');
       setLastName(profileData.user.lastName || '');
-      setUserName(profileData.user.userName || '');
-      setBio(profileData.user.bio || '');
+      setStudentClass(profileData.user.studentClass || '');
+      setMatricNumber(profileData.user.matricNumber || '');
+      setPhone(profileData.user.phone || '');
     }
   }, [profileData]);
 
@@ -51,8 +53,9 @@ const EditProfileScreen = () => {
     const updateData = {
       firstName: firstName.trim(),
       lastName: lastName.trim(),
-      userName: userName.trim(),
-      bio: bio.trim(),
+      studentClass: studentClass.trim(),
+      matricNumber: matricNumber.trim(),
+      phone: phone.trim(),
     };
 
     if (profilePic) {
@@ -151,57 +154,48 @@ const EditProfileScreen = () => {
 
         {/* Form Fields */}
         <View style={styles.formSection}>
-          <View style={styles.inputGroup}>
-            <Text variant="body2" fontWeight="500" style={styles.label}>
-              First Name
-            </Text>
-            <TextInput
-              placeholder="Enter first name"
-              value={firstName}
-              onChangeText={setFirstName}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text variant="body2" fontWeight="500" style={styles.label}>
-              Last Name
-            </Text>
-            <TextInput
-              placeholder="Enter last name"
-              value={lastName}
-              onChangeText={setLastName}
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text variant="body2" fontWeight="500" style={styles.label}>
-              Username
-            </Text>
-            <TextInput
-              placeholder="Enter username"
-              value={userName}
-              onChangeText={setUserName}
-              autoCapitalize="none"
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text variant="body2" fontWeight="500" style={styles.label}>
-              Bio
-            </Text>
-            <TextInput
-              placeholder="Tell us about yourself..."
-              value={bio}
-              onChangeText={setBio}
-              multiline
-              numberOfLines={4}
-              style={styles.bioInput}
-            />
-          </View>
-
-          <View style={styles.inputGroup}>
+          <ProfileSetupInput
+            label="First Name"
+            placeholder="Enter first name"
+            value={firstName}
+            onChangeText={setFirstName}
+            icon={require('@assets/icons/iconamoon_profile.png')}
+          />
+          <View style={styles.fieldSpacer} />
+          <ProfileSetupInput
+            label="Last Name"
+            placeholder="Enter last name"
+            value={lastName}
+            onChangeText={setLastName}
+            icon={require('@assets/icons/iconamoon_profile.png')}
+          />
+          <View style={styles.fieldSpacer} />
+          <ProfileSetupInput
+            label="Class"
+            placeholder="e.g. 300L, 400L"
+            value={studentClass}
+            onChangeText={setStudentClass}
+            icon={require('@assets/icons/mdi_university-outline.png')}
+          />
+          <View style={styles.fieldSpacer} />
+          <ProfileSetupInput
+            label="Matric Number"
+            placeholder="Enter your matric number"
+            value={matricNumber}
+            onChangeText={setMatricNumber}
+            icon={require('@assets/icons/mdi_university-outline.png')}
+          />
+          <View style={styles.fieldSpacer} />
+          <ProfileSetupInput
+            label="Phone Number"
+            placeholder="Enter your phone number"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            icon={require('@assets/icons/iconamoon_profile.png')}
+          />
+          <View style={styles.fieldSpacer} />
+          {/* <View style={styles.inputGroup}>
             <Text variant="body2" fontWeight="500" style={styles.label}>
               Email
             </Text>
@@ -214,7 +208,7 @@ const EditProfileScreen = () => {
             <Text variant="caption" color="gray" style={styles.hint}>
               Email cannot be changed
             </Text>
-          </View>
+          </View> */}
         </View>
       </ScrollView>
 
@@ -266,6 +260,9 @@ const styles = StyleSheet.create({
   formSection: {
     paddingBottom: 20,
   },
+  fieldSpacer: {
+    height: 20,
+  },
   inputGroup: {
     marginBottom: 20,
   },
@@ -290,7 +287,8 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   footer: {
-    paddingVertical: 16,
+    paddingVertical: 24,
+    paddingBottom: 40,
   },
 });
 
