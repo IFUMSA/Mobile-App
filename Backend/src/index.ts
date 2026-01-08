@@ -18,6 +18,7 @@ import cardRouter from "./Routes/card";
 import aiRouter from "./Routes/ai";
 import adminRouter from "./Routes/admin";
 import contentRouter from "./Routes/content";
+import uploadRouter from "./Routes/upload";
 
 //Initialize Express
 const app: Express = express();
@@ -50,7 +51,9 @@ app.use(cors({
   ],
   credentials: true,
 }));
-app.use(json({ extended: false }));
+
+// Increase body size limit for base64 image uploads
+app.use(json({ limit: '10mb' }));
 
 console.log(config.PORT)
 const port = config.PORT || 8080;
@@ -76,6 +79,7 @@ app.use("/api/cards", cardRouter);
 app.use("/api/ai", aiRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/content", contentRouter);
+app.use("/api/upload", uploadRouter);
 
 const server = app.listen(port, () => {
   console.log(`⚡️[server]: Server is running at http://localhost:${port}`);

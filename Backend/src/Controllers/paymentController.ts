@@ -26,7 +26,8 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
 
         // Build query
         const query: { userId: any; status?: PaymentStatus } = { userId };
-        if (status && ["pending", "success", "failed"].includes(status as string)) {
+        const validStatuses = ["pending", "submitted", "confirmed", "completed", "rejected"];
+        if (status && validStatuses.includes(status as string)) {
             query.status = status as PaymentStatus;
         }
 

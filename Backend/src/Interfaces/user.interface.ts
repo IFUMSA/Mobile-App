@@ -7,6 +7,9 @@ export interface IUser extends Document {
   userName: string;
   firstName: string;
   lastName: string;
+  studentClass?: string;
+  matricNumber?: string;
+  phone?: string;
   isVerified: boolean;
   verificationToken: string;
   verificationExpires: Date;

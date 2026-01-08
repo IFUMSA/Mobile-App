@@ -25,6 +25,18 @@ const UserSchema: Schema = new Schema<IUser>(
       type: String,
       required: true,
     },
+    studentClass: {
+      type: String,
+      default: null,
+    },
+    matricNumber: {
+      type: String,
+      default: null,
+    },
+    phone: {
+      type: String,
+      default: null,
+    },
     isVerified: {
       type: Boolean,
       required: true,

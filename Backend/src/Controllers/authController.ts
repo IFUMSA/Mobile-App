@@ -193,7 +193,7 @@ export const verifyUser = async (req: Request, res: Response) => {
           message:
             "User has been verified in the past and is only clicking on the link again",
         });
-        return;
+      return;
     }
 
     //Update User as Verified if checks are passed
@@ -202,8 +202,53 @@ export const verifyUser = async (req: Request, res: Response) => {
     user.verificationExpires = null;
     await user.save();
 
-    //Redirect to frontend success page or respond with a success message
-    res.redirect(`${config.FRONTEND_URL}/verification-success`);
+    // FOR DEVELOPMENT BUILDS: Uncomment this line to use deep linking
+    // res.redirect(`ifumsa://verification-success`);
+
+    // FOR EXPO GO TESTING: Show a success HTML page
+    res.send(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Email Verified - IFUMSA</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              min-height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #1F382E 0%, #2A996B 100%);
+              color: white;
+              text-align: center;
+              padding: 20px;
+            }
+            .container {
+              background: rgba(255,255,255,0.1);
+              padding: 40px;
+              border-radius: 20px;
+              backdrop-filter: blur(10px);
+              max-width: 400px;
+            }
+            .checkmark {
+              font-size: 64px;
+              margin-bottom: 20px;
+            }
+            h1 { margin: 0 0 16px 0; font-size: 24px; }
+            p { margin: 0; opacity: 0.9; line-height: 1.6; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="checkmark">✓</div>
+            <h1>Email Verified!</h1>
+            <p>Your email has been successfully verified. You can now close this page and log in to the IFUMSA app.</p>
+          </div>
+        </body>
+      </html>
+    `);
     return;
   } catch (error) {
     console.error("Verification error: ", error);
