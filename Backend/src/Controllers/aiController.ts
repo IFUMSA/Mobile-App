@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { generateText } from "ai";
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { RateLimit } from "../Models/RateLimit";
+import { User } from "../Models/User";
 import config from "../config";
 
 // Rate limit configuration
@@ -12,6 +13,15 @@ const RATE_LIMIT_ACTION = "generate_questions";
 const anthropic = createAnthropic({
     apiKey: config.ANTHROPIC_API_KEY,
 });
+
+/**
+ * Check if user is an admin based on their email
+ */
+function isAdminEmail(email: string): boolean {
+    const adminEmails = process.env.ADMIN_EMAILS || "";
+    const adminList = adminEmails.split(",").map((e) => e.trim().toLowerCase());
+    return adminList.includes(email.toLowerCase());
+}
 
 /**
  * Check and update rate limit for a user action
@@ -72,23 +82,31 @@ export const generateQuestions = async (req: Request, res: Response) => {
             return;
         }
 
-        // TEMPORARILY DISABLED FOR TESTING - RE-ENABLE BEFORE PRODUCTION
-        // Check rate limit
-        // const { allowed, remaining, resetAt, rateLimit } = await checkRateLimit(
-        //   userId as string,
-        //   RATE_LIMIT_ACTION,
-        //   DAILY_GENERATION_LIMIT
-        // );
+        // Get user to check if admin
+        const user = await User.findById(userId);
+        const userEmail = String(user?.email || "");
+        const isAdmin = isAdminEmail(userEmail);
 
-        // if (!allowed) {
-        //   res.status(429).json({
-        //     success: false,
-        //     error: `Daily limit reached. You can generate ${DAILY_GENERATION_LIMIT} quizzes per day.`,
-        //     resetAt: resetAt.toISOString(),
-        //     remaining: 0,
-        //   });
-        //   return;
-        // }
+        // Check rate limit (skip for admins)
+        let rateLimitRecord: any = null;
+        if (!isAdmin) {
+            const { allowed, remaining, resetAt, rateLimit } = await checkRateLimit(
+                userId as string,
+                RATE_LIMIT_ACTION,
+                DAILY_GENERATION_LIMIT
+            );
+            rateLimitRecord = rateLimit;
+
+            if (!allowed) {
+                res.status(429).json({
+                    success: false,
+                    error: `Daily limit reached. You can generate ${DAILY_GENERATION_LIMIT} quizzes per day.`,
+                    resetAt: resetAt.toISOString(),
+                    remaining: 0,
+                });
+                return;
+            }
+        }
 
         const { topic, questionType, numberOfQuestions, fileParts } = req.body;
 
@@ -236,10 +254,12 @@ CRITICAL: Always respond with valid JSON only. Never use markdown code blocks. N
             explanation: q.explanation || "No explanation provided.",
         }));
 
-        // TEMPORARILY DISABLED - rate limit update
-        // rateLimit.count += 1;
-        // rateLimit.lastUsed = new Date();
-        // await rateLimit.save();
+        // Increment rate limit counter for non-admin users
+        if (rateLimitRecord) {
+            rateLimitRecord.count += 1;
+            rateLimitRecord.lastUsed = new Date();
+            await rateLimitRecord.save();
+        }
 
         console.log("=== SENDING SUCCESS RESPONSE ===");
         console.log("Questions count:", questions.length);
@@ -248,7 +268,6 @@ CRITICAL: Always respond with valid JSON only. Never use markdown code blocks. N
             success: true,
             questions,
             count: questions.length,
-            // remaining: remaining - 1,  // Temporarily disabled
         });
         return;
     } catch (error: any) {
