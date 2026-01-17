@@ -32,7 +32,8 @@
     "mongoose": "^8.12.1",
     "multer": "^2.0.2",
     "nodemailer": "^6.10.0",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "resend": "^6.7.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
