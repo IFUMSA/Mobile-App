@@ -16,6 +16,10 @@
         "backgroundColor": "#1F382E",
         "imageResizeMode": "contain",
         "imageSize": 383
+      },
+      "bundleIdentifier": "com.seyimarv.Ifumsa",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -48,6 +52,9 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "06c9df2e-92ae-4475-a564-c5ff08b1d5bf"
       }
     }
   }

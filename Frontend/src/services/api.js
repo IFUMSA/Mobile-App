@@ -2,10 +2,9 @@ import axios from 'axios';
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 
-// Base URL for API - change this to your backend URL
-// For local development with Expo, use your computer's IP address
-// e.g., 'http://192.168.1.100:5000' (not localhost)
-const API_BASE_URL = 'http://172.20.10.2:5000';
+// Base URL for API - uses environment variable for flexibility
+// Set EXPO_PUBLIC_API_BASE_URL in .env (local) or EAS secrets (production)
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:5000';
 
 // Storage helper for cross-platform support
 const storage = {
