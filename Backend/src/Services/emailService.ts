@@ -1,11 +1,28 @@
 import { Resend } from 'resend';
+import nodemailer from 'nodemailer';
 import config from '../config';
 
-// Initialize Resend with API key
-const resend = new Resend(config.RESEND_API_KEY);
+// Determine which email provider to use
+// Use Resend if API key is set and valid, otherwise use Gmail SMTP
+const useResend = config.RESEND_API_KEY && !config.RESEND_API_KEY.includes('your_api_key');
 
-// Default sender - use your verified domain or Resend's test domain
-const DEFAULT_FROM = config.EMAIL_FROM || 'IFUMSA <onboarding@resend.dev>';
+// Initialize Resend (if using)
+const resend = useResend ? new Resend(config.RESEND_API_KEY) : null;
+
+// Initialize Nodemailer transporter for Gmail SMTP
+const nodemailerTransporter = nodemailer.createTransport({
+    host: config.EMAIL_HOST || 'smtp.gmail.com',
+    port: parseInt(config.EMAIL_PORT || '587'),
+    secure: config.EMAIL_SECURE === 'true',
+    auth: {
+        user: config.EMAIL_USER,
+        pass: config.EMAIL_PASSWORD,
+    },
+});
+
+// Default sender
+const DEFAULT_FROM_RESEND = config.EMAIL_FROM || 'IFUMSA <onboarding@resend.dev>';
+const DEFAULT_FROM_SMTP = config.EMAIL_FROM || `IFUMSA <${config.EMAIL_USER}>`;
 
 interface EmailOptions {
     to: string;
@@ -15,12 +32,13 @@ interface EmailOptions {
 
 /**
  * Send an email using Resend API
- * Works on all hosting providers (no SMTP port blocking issues)
  */
-export const sendEmail = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
+const sendWithResend = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
+    if (!resend) return false;
+
     try {
         const { data, error } = await resend.emails.send({
-            from: DEFAULT_FROM,
+            from: DEFAULT_FROM_RESEND,
             to,
             subject,
             html,
@@ -31,11 +49,45 @@ export const sendEmail = async ({ to, subject, html }: EmailOptions): Promise<bo
             return false;
         }
 
-        console.log('Email sent successfully:', data?.id);
+        console.log('Email sent via Resend:', data?.id);
         return true;
     } catch (error) {
-        console.error('Email sending failed:', error);
+        console.error('Resend sending failed:', error);
         return false;
+    }
+};
+
+/**
+ * Send an email using Nodemailer (Gmail SMTP)
+ */
+const sendWithNodemailer = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
+    try {
+        const info = await nodemailerTransporter.sendMail({
+            from: DEFAULT_FROM_SMTP,
+            to,
+            subject,
+            html,
+        });
+
+        console.log('Email sent via Gmail SMTP:', info.messageId);
+        return true;
+    } catch (error) {
+        console.error('Nodemailer sending failed:', error);
+        return false;
+    }
+};
+
+/**
+ * Send an email using the configured provider
+ * Uses Resend if configured, otherwise falls back to Gmail SMTP
+ */
+export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
+    if (useResend) {
+        console.log('Using Resend for email delivery');
+        return sendWithResend(options);
+    } else {
+        console.log('Using Gmail SMTP for email delivery');
+        return sendWithNodemailer(options);
     }
 };
 
