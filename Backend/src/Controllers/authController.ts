@@ -82,15 +82,19 @@ export const createUser = async (req: Request, res: Response) => {
     const emailSent = await sendVerificationEmail(email, firstName, verificationURL);
 
     if (!emailSent) {
+      // Email failed to send - delete the user and return error
       console.error("Failed to send verification email to:", email);
-    } else {
-      console.log("Verification email sent to:", email);
+      await User.deleteOne({ _id: newUser._id });
+      res.status(500).json({
+        message: "Registration failed: Unable to send verification email. Please try again.",
+      });
+      return;
     }
 
-    //After verification email has been sent, save user details
+    console.log("Verification email sent to:", email);
     res.status(201).json({
       status: 201,
-      message: "User Registered Successfully",
+      message: "User Registered Successfully. Please check your email to verify your account.",
     });
     console.log("User Created Successfully!");
     return;
