@@ -1,28 +1,13 @@
-import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
+import sgMail from '@sendgrid/mail';
 import config from '../config';
 
-// Determine which email provider to use
-// Use Resend if API key is set and valid, otherwise use Gmail SMTP
-const useResend = config.RESEND_API_KEY && !config.RESEND_API_KEY.includes('your_api_key');
+// Initialize SendGrid with API key
+if (config.SENDGRID_API_KEY) {
+    sgMail.setApiKey(config.SENDGRID_API_KEY);
+}
 
-// Initialize Resend (if using)
-const resend = useResend ? new Resend(config.RESEND_API_KEY) : null;
-
-// Initialize Nodemailer transporter for Gmail SMTP
-const nodemailerTransporter = nodemailer.createTransport({
-    host: config.EMAIL_HOST || 'smtp.gmail.com',
-    port: parseInt(config.EMAIL_PORT || '587'),
-    secure: config.EMAIL_SECURE === 'true',
-    auth: {
-        user: config.EMAIL_USER,
-        pass: config.EMAIL_PASSWORD,
-    },
-});
-
-// Default sender
-const DEFAULT_FROM_RESEND = config.EMAIL_FROM || 'IFUMSA <onboarding@resend.dev>';
-const DEFAULT_FROM_SMTP = config.EMAIL_FROM || `IFUMSA <${config.EMAIL_USER}>`;
+// Default sender - use the email you verified in SendGrid
+const DEFAULT_FROM = config.EMAIL_FROM || config.EMAIL_USER || 'noreply@example.com';
 
 interface EmailOptions {
     to: string;
@@ -31,63 +16,28 @@ interface EmailOptions {
 }
 
 /**
- * Send an email using Resend API
+ * Send an email using SendGrid API
+ * Works on all hosting providers (uses HTTPS, not SMTP)
  */
-const sendWithResend = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
-    if (!resend) return false;
+export const sendEmail = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
+    if (!config.SENDGRID_API_KEY) {
+        console.error('SendGrid API key not configured');
+        return false;
+    }
 
     try {
-        const { data, error } = await resend.emails.send({
-            from: DEFAULT_FROM_RESEND,
+        await sgMail.send({
             to,
+            from: DEFAULT_FROM,
             subject,
             html,
         });
 
-        if (error) {
-            console.error('Resend error:', error);
-            return false;
-        }
-
-        console.log('Email sent via Resend:', data?.id);
+        console.log('Email sent successfully via SendGrid to:', to);
         return true;
-    } catch (error) {
-        console.error('Resend sending failed:', error);
+    } catch (error: any) {
+        console.error('SendGrid error:', error?.response?.body || error);
         return false;
-    }
-};
-
-/**
- * Send an email using Nodemailer (Gmail SMTP)
- */
-const sendWithNodemailer = async ({ to, subject, html }: EmailOptions): Promise<boolean> => {
-    try {
-        const info = await nodemailerTransporter.sendMail({
-            from: DEFAULT_FROM_SMTP,
-            to,
-            subject,
-            html,
-        });
-
-        console.log('Email sent via Gmail SMTP:', info.messageId);
-        return true;
-    } catch (error) {
-        console.error('Nodemailer sending failed:', error);
-        return false;
-    }
-};
-
-/**
- * Send an email using the configured provider
- * Uses Resend if configured, otherwise falls back to Gmail SMTP
- */
-export const sendEmail = async (options: EmailOptions): Promise<boolean> => {
-    if (useResend) {
-        console.log('Using Resend for email delivery');
-        return sendWithResend(options);
-    } else {
-        console.log('Using Gmail SMTP for email delivery');
-        return sendWithNodemailer(options);
     }
 };
 

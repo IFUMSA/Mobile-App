@@ -15,6 +15,7 @@
   "description": "",
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.0",
+    "@sendgrid/mail": "^8.1.6",
     "@types/multer": "^2.0.0",
     "ai": "^6.0.14",
     "bcrypt": "^6.0.0",
