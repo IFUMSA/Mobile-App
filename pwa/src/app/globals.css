@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* IFUMSA Theme - Based on mobile app theme */
+:root {
+  /* Colors */
+  --color-primary: #1F382E;
+  --color-secondary: #2A996B;
+  --color-background: #FFFFFF;
+  --color-foreground: #11181C;
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #1F382E;
+  --color-gray: #C1C1C1;
+  --color-gray-light: #D9D9D9;
+  --color-success: #2A996B;
+  --color-error: #F84F4F;
+  --color-pending: #F79E1B;
+  --color-disabled: #A0A0A0;
+  --color-disabled-text: #666666;
+  --color-modal-overlay: rgba(7, 13, 11, 0.5);
+
+  /* Fonts */
+  --font-heading: 'Playfair Display', serif;
+  --font-body: 'Poppins', sans-serif;
+
+  /* Spacing */
+  --spacing-small: 0.5rem;
+  --spacing-medium: 1rem;
+  --spacing-large: 1.5rem;
+}
+
+/* Tailwind v4 theme extension */
+@theme inline {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-background: var(--color-background);
+  --color-foreground: var(--color-foreground);
+  --font-sans: var(--font-body);
+  --font-heading: var(--font-heading);
+}
+
+/* Base styles */
+body {
+  font-family: var(--font-body);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* PWA-specific styles */
+@media (display-mode: standalone) {
+  body {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+}
+
+/* Hide scrollbar for cleaner mobile experience */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Install prompt slide-up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
+}

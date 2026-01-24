@@ -42,12 +42,15 @@ app.use(session({
   }
 }))
 
-// CORS configuration - allow credentials for admin panel
+// CORS configuration - allow credentials for admin panel and PWA
 app.use(cors({
   origin: [
-    "http://localhost:3000",  // Admin panel dev
+    "http://localhost:3000",  // Admin panel dev / PWA
     "http://localhost:3001",  // Alternative port
+    "http://localhost:5173",  // Vite default
+    "http://172.20.10.2:3000", // Network IP for mobile testing
     process.env.ADMIN_URL || "http://localhost:3000",
+    process.env.PWA_URL || "http://localhost:3000",
   ],
   credentials: true,
 }));
@@ -81,6 +84,6 @@ app.use("/api/admin", adminRouter);
 app.use("/api/content", contentRouter);
 app.use("/api/upload", uploadRouter);
 
-const server = app.listen(port, () => {
-  console.log(`⚡️[server]: Server is running at http://localhost:${port}`);
+const server = app.listen(port, "0.0.0.0", () => {
+  console.log(`⚡️[server]: Server is running at http://0.0.0.0:${port}`);
 });

@@ -4,6 +4,9 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { RateLimit } from "../Models/RateLimit";
 import { User } from "../Models/User";
 import config from "../config";
+// pdf-parse v2 exports PDFParse class
+const { PDFParse } = require("pdf-parse");
+import mammoth from "mammoth";
 
 // Rate limit configuration
 const DAILY_GENERATION_LIMIT = 20;
@@ -13,6 +16,36 @@ const RATE_LIMIT_ACTION = "generate_questions";
 const anthropic = createAnthropic({
     apiKey: config.ANTHROPIC_API_KEY,
 });
+
+/**
+ * Extract text content from various document types
+ */
+async function extractTextFromDocument(base64Data: string, mimeType: string): Promise<string> {
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    try {
+        if (mimeType === 'application/pdf') {
+            // PDF extraction using PDFParse v2 class
+            // v2 requires { data: Uint8Array } in constructor
+            const uint8Array = new Uint8Array(buffer);
+            const parser = new PDFParse({ data: uint8Array });
+            const result = await parser.getText();
+            return result?.text || '';
+        } else if (mimeType === 'application/msword' ||
+            mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+            // Word document extraction
+            const result = await mammoth.extractRawText({ buffer });
+            return result.value || '';
+        } else if (mimeType === 'text/plain') {
+            // Plain text - just decode
+            return buffer.toString('utf-8');
+        }
+        return '';
+    } catch (error) {
+        console.error('Error extracting text from document:', error);
+        return '';
+    }
+}
 
 /**
  * Check if user is an admin based on their email
@@ -163,8 +196,19 @@ export const generateQuestions = async (req: Request, res: Response) => {
             ? '["Option A text", "Option B text", "Option C text", "Option D text"]'
             : '["True", "False"]';
 
-        const prompt = `You are generating ${numQuestions} ${questionTypeDesc} for medical students studying "${topic || "the provided material"
-            }".
+        // Build context based on what's provided
+        const hasDocument = fileParts && Array.isArray(fileParts) && fileParts.length > 0;
+        const topicContext = topic
+            ? `the topic "${topic}"`
+            : hasDocument
+                ? "the attached document/image"
+                : "general medical knowledge";
+
+        const documentInstruction = hasDocument
+            ? `\n\nIMPORTANT: A document/file has been attached above. You MUST analyze this document thoroughly and generate questions based ONLY on its content. Extract key facts, concepts, and information from the document to create relevant questions.`
+            : "";
+
+        const prompt = `You are generating ${numQuestions} ${questionTypeDesc} for medical students studying ${topicContext}.${documentInstruction}
 
 REQUIREMENTS:
 1. Each question must be clear, unambiguous, and clinically relevant
@@ -190,8 +234,58 @@ Generate exactly ${numQuestions} questions now:`;
         console.log("=== CALLING ANTHROPIC API ===");
         console.log("Model: claude-haiku-4-5");
         console.log("Topic:", topic);
+        console.log("Has file parts:", fileParts?.length > 0);
 
-        // Call AI via Anthropic
+        // Build message content array for multimodal processing
+        const messageContent: any[] = [];
+        let extractedDocumentText = '';
+
+        // Process file parts
+        if (fileParts && Array.isArray(fileParts) && fileParts.length > 0) {
+            for (const part of fileParts) {
+                if (part.url && part.mediaType) {
+                    // Handle base64 data URLs
+                    if (part.url.startsWith('data:')) {
+                        const isImage = part.mediaType.startsWith('image/');
+                        const base64Data = part.url.split(',')[1];
+
+                        if (isImage) {
+                            // Images use 'image' type with the full data URL
+                            messageContent.push({
+                                type: 'image',
+                                image: part.url,
+                            });
+                            console.log("Added image part:", part.mediaType);
+                        } else if (base64Data) {
+                            // Extract text from PDFs, Word docs, and text files
+                            console.log("Extracting text from:", part.mediaType);
+                            const text = await extractTextFromDocument(base64Data, part.mediaType);
+                            if (text) {
+                                extractedDocumentText += text + '\n\n';
+                                console.log("Extracted text length:", text.length);
+                            } else {
+                                console.log("No text extracted from document");
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Build the final prompt with extracted document text
+        let finalPrompt = prompt;
+        if (extractedDocumentText) {
+            finalPrompt = `DOCUMENT CONTENT:\n${extractedDocumentText.slice(0, 50000)}\n\n---\n\n${prompt}`;
+            console.log("Added document text to prompt, total length:", finalPrompt.length);
+        }
+
+        // Add the text prompt
+        messageContent.push({
+            type: 'text',
+            text: finalPrompt,
+        });
+
+        // Call AI via Anthropic with multimodal content
         const result = await generateText({
             model: anthropic('claude-haiku-4-5'),
             system: `You are Dr. Quiz, an expert medical education specialist for IFUMSA (Ife University Medical Students Association). You create high-quality, exam-style questions that help medical students prepare for their assessments.
@@ -202,8 +296,15 @@ Your questions are:
 - Designed to test critical thinking, not just recall
 - Accompanied by educational explanations
 
+IMPORTANT: If a document/file is provided, analyze it thoroughly and generate questions based on its content. Focus on key concepts, important facts, and clinically relevant information from the document.
+
 CRITICAL: Always respond with valid JSON only. Never use markdown code blocks. Never include text before or after the JSON.`,
-            prompt,
+            messages: [
+                {
+                    role: 'user',
+                    content: messageContent,
+                },
+            ],
         });
 
         console.log("=== AI RESPONSE RECEIVED ===");

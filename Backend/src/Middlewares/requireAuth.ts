@@ -1,11 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 
 export const requireAuth = async (
-  req: Request & {
-    session: {
-      isAuthenticated: boolean;
-    };
-  },
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
