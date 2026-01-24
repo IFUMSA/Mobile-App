@@ -4,13 +4,12 @@ const withSerwist = withSerwistInit({
   swSrc: "src/sw.ts",
   swDest: "public/sw.js",
   disable: process.env.NODE_ENV !== "production",
+  reloadOnOnline: true,
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // Add empty turbopack config to avoid webpack/turbopack conflict warning
-  turbopack: {},
   images: {
     remotePatterns: [
       {
