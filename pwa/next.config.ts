@@ -10,6 +10,8 @@ const withSerwist = withSerwistInit({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Required for webpack-based plugins (Serwist) with Next.js 16 Turbopack
+  turbopack: {},
   images: {
     remotePatterns: [
       {
