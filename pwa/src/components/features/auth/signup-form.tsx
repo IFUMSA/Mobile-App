@@ -43,6 +43,7 @@ export function SignupForm() {
             await authService.register({
                 email: data.email,
                 password: data.password,
+                userName: data.userName,
                 firstName: data.firstName,
                 lastName: data.lastName,
             });
