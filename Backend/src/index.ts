@@ -26,19 +26,24 @@ const app: Express = express();
 //Initialize dotenv
 dotenv.config();
 
+// Trust proxy for Railway/Render/etc (needed for secure cookies behind reverse proxy)
+app.set('trust proxy', 1);
+
+const isProduction = process.env.NODE_ENV === 'production';
+
 app.use(session({
-  // store: redisStore,
   secret: config.SESSION_SECRET,
   resave: false,
   saveUninitialized: false,
   store: MongoStore.create({
     mongoUrl: config.MONGODB_URL,
-    ttl: 14 * 24 * 60 * 60 * 1000 //Session expires in 14 days (in Seconds)
+    ttl: 14 * 24 * 60 * 60 // 14 days in SECONDS
   }),
   cookie: {
-    secure: false,
+    secure: isProduction, // true in production (HTTPS), false in dev
     httpOnly: true,
-    maxAge: 1000 * 60 * 60 * 3,
+    maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days in ms
+    sameSite: isProduction ? 'none' : 'lax', // 'none' required for cross-origin
   }
 }))
 
