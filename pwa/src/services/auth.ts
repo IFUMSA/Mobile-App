@@ -1,6 +1,8 @@
-import api from "@/lib/api";
+import api, { authApi } from "@/lib/api";
 
 // Auth service - matches mobile app services/auth.js
+// Uses authApi (Vercel proxy) for login/logout/me/register
+// Uses api (direct) for other auth endpoints
 
 export interface LoginData {
     email: string;
@@ -10,31 +12,30 @@ export interface LoginData {
 export interface RegisterData {
     email: string;
     password: string;
-    firstName?: string;
-    lastName?: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
 }
 
 export const authService = {
+    // These use Vercel proxy (authApi) for same-origin cookies
     login: async (data: LoginData) => {
-        const response = await api.post("/api/auth/login", data);
-        return response.data;
+        return authApi.login(data.email, data.password);
     },
 
     register: async (data: RegisterData) => {
-        const response = await api.post("/api/auth/register", data);
-        return response.data;
+        return authApi.register(data);
     },
 
     logout: async () => {
-        const response = await api.post("/api/auth/logout");
-        return response.data;
+        return authApi.logout();
     },
 
     getMe: async () => {
-        const response = await api.get("/api/auth/me");
-        return response.data;
+        return authApi.getMe();
     },
 
+    // These go direct to backend (don't need cookies)
     verifyEmail: async (token: string) => {
         const response = await api.post("/api/auth/verify-email", { token });
         return response.data;

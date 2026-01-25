@@ -3,25 +3,43 @@ import axios from "axios";
 /**
  * API Client for Next.js PWA
  * 
- * Uses HTTP-only cookies for authentication (best practice):
- * - withCredentials: true sends cookies automatically
- * - No tokens in localStorage (XSS-safe)
- * - Server manages session via HTTP-only cookies
+ * Hybrid auth approach:
+ * - Auth endpoints go through Vercel proxy (same-origin cookie)
+ * - Other endpoints go direct to Railway with Bearer token
  */
 
-// Base URL for API
-const API_BASE_URL =
+// Backend URL for direct API calls
+const BACKEND_URL =
     process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:5000";
 
-// Create axios instance
+// Token stored in memory (XSS-safe, cleared on refresh)
+let authToken: string | null = null;
+
+export const setAuthToken = (token: string | null) => {
+    authToken = token;
+};
+
+export const getAuthToken = () => authToken;
+
+// Create axios instance for backend direct calls
 const api = axios.create({
-    baseURL: API_BASE_URL,
+    baseURL: BACKEND_URL,
     timeout: 60000, // 60 seconds for AI calls
     headers: {
         "Content-Type": "application/json",
     },
-    withCredentials: true, // CRITICAL: sends HTTP-only cookies automatically
 });
+
+// Request interceptor - add auth token to requests
+api.interceptors.request.use(
+    (config) => {
+        if (authToken) {
+            config.headers.Authorization = `Bearer ${authToken}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
 
 // Logout callback - will be set by AuthProvider
 let onUnauthorized: (() => void) | null = null;
@@ -39,6 +57,7 @@ api.interceptors.response.use(
 
             if (status === 401) {
                 console.log("Unauthorized - triggering auto-logout");
+                authToken = null;
                 if (onUnauthorized) {
                     onUnauthorized();
                 }
@@ -63,5 +82,57 @@ api.interceptors.response.use(
     }
 );
 
+// Auth API - goes through Vercel proxy (same-origin for cookies)
+export const authApi = {
+    async login(email: string, password: string) {
+        const response = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password }),
+        });
+        const data = await response.json();
+        if (!response.ok) throw data;
+        // Store token in memory for direct backend calls
+        if (data.token) {
+            authToken = data.token;
+        }
+        return data;
+    },
+
+    async logout() {
+        authToken = null;
+        const response = await fetch("/api/auth/logout", { method: "POST" });
+        return response.json();
+    },
+
+    async getMe() {
+        const response = await fetch("/api/auth/me");
+        const data = await response.json();
+        if (!response.ok) throw data;
+        // Restore token from server response
+        if (data.token) {
+            authToken = data.token;
+        }
+        return data;
+    },
+
+    async register(userData: {
+        email: string;
+        password: string;
+        userName: string;
+        firstName: string;
+        lastName: string;
+    }) {
+        const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(userData),
+        });
+        const data = await response.json();
+        if (!response.ok) throw data;
+        return data;
+    },
+};
+
 export default api;
-export { API_BASE_URL };
+export { BACKEND_URL as API_BASE_URL };

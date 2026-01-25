@@ -7,24 +7,20 @@ import React, {
     useState,
     useCallback,
 } from "react";
-import api, { setOnUnauthorized } from "@/lib/api";
+import { authApi, setOnUnauthorized, setAuthToken } from "@/lib/api";
 
 /**
- * Auth Context using HTTP-only cookies (best practice for Next.js)
+ * Auth Context with Hybrid Auth
  * 
- * Why NOT localStorage:
- * - localStorage is vulnerable to XSS attacks
- * - Any JavaScript can read localStorage tokens
+ * How it works:
+ * 1. Login/logout go through Vercel proxy (/api/auth/*) - sets httpOnly cookie
+ * 2. Token is also stored in memory for direct backend calls
+ * 3. On page refresh, /api/auth/me restores token from cookie
  * 
- * Why HTTP-only cookies:
- * - Cannot be accessed by JavaScript (XSS-safe)
- * - Automatically sent with requests via withCredentials
- * - Server sets/clears cookies on login/logout
- * 
- * The backend should:
- * 1. Set HTTP-only, Secure, SameSite=Strict cookie on login
- * 2. Clear cookie on logout
- * 3. Validate cookie on /api/auth/me endpoint
+ * Why this approach:
+ * - HttpOnly cookie survives refresh (same-origin via Vercel)
+ * - Token in memory for direct Railway API calls
+ * - Works on mobile Chrome (no third-party cookie issues)
  */
 
 interface User {
@@ -57,8 +53,9 @@ interface AuthContextType {
 interface RegisterData {
     email: string;
     password: string;
-    firstName?: string;
-    lastName?: string;
+    userName: string;
+    firstName: string;
+    lastName: string;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,12 +66,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const clearAuth = useCallback(() => {
         setUser(null);
+        setAuthToken(null);
     }, []);
 
     const refreshUser = useCallback(async () => {
         try {
-            const response = await api.get("/api/auth/me");
-            setUser(response.data.user);
+            const data = await authApi.getMe();
+            setUser(data.user);
         } catch {
             clearAuth();
         }
@@ -88,11 +86,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         setOnUnauthorized(handleUnauthorized);
 
-        // Check auth status on mount - cookie is sent automatically
+        // Check auth status on mount - uses cookie via Vercel proxy
         const checkAuth = async () => {
             try {
-                const response = await api.get("/api/auth/me");
-                setUser(response.data.user);
+                const data = await authApi.getMe();
+                setUser(data.user);
             } catch {
                 setUser(null);
             } finally {
@@ -106,20 +104,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }, [handleUnauthorized]);
 
     const login = async (email: string, password: string) => {
-        // Server sets HTTP-only cookie on successful login
-        const response = await api.post("/api/auth/login", { email, password });
-        setUser(response.data.user);
+        const data = await authApi.login(email, password);
+        setUser(data.user);
     };
 
     const register = async (data: RegisterData) => {
-        // Don't auto-login - user needs to verify email first
-        await api.post("/api/auth/register", data);
+        await authApi.register(data);
     };
 
     const logout = async () => {
         try {
-            // Server clears HTTP-only cookie
-            await api.post("/api/auth/logout");
+            await authApi.logout();
         } catch {
             // Ignore logout errors
         } finally {
@@ -128,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const updateProfile = async (profileData: Partial<User>) => {
+        // Import api here to avoid circular dependency
+        const api = (await import("@/lib/api")).default;
         const response = await api.put("/api/user/profile", profileData);
         setUser(response.data.user);
     };
