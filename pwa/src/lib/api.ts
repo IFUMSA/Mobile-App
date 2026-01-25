@@ -33,6 +33,7 @@ const api = axios.create({
 // Request interceptor - add auth token to requests
 api.interceptors.request.use(
     (config) => {
+        console.log("[API] Making request, authToken exists:", !!authToken);
         if (authToken) {
             config.headers.Authorization = `Bearer ${authToken}`;
         }
@@ -91,10 +92,14 @@ export const authApi = {
             body: JSON.stringify({ email, password }),
         });
         const data = await response.json();
+        console.log("[AUTH] Login response:", { ok: response.ok, hasToken: !!data.token, hasUser: !!data.user });
         if (!response.ok) throw data;
         // Store token in memory for direct backend calls
         if (data.token) {
             authToken = data.token;
+            console.log("[AUTH] Token stored in memory, length:", data.token.length);
+        } else {
+            console.error("[AUTH] No token in login response!");
         }
         return data;
     },

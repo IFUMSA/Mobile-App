@@ -5,19 +5,20 @@ import {
   setDefaultCard,
   deleteCard,
 } from "../Controllers/cardController";
+import { requireAuth } from "../Middlewares/requireAuth";
 
 const cardRouter: Router = express.Router();
 
 // Get user's saved cards
-cardRouter.get("/", getCards);
+cardRouter.get("/", requireAuth, getCards);
 
 // Add a new card
-cardRouter.post("/", addCard);
+cardRouter.post("/", requireAuth, addCard);
 
 // Set card as default
-cardRouter.put("/:id/default", setDefaultCard);
+cardRouter.put("/:id/default", requireAuth, setDefaultCard);
 
 // Delete a card
-cardRouter.delete("/:id", deleteCard);
+cardRouter.delete("/:id", requireAuth, deleteCard);
 
 export = cardRouter;

@@ -1,6 +1,7 @@
 import express, { type Router } from "express";
 import multer from "multer";
 import { parseFile } from "../Controllers/fileController";
+import { requireAuth } from "../Middlewares/requireAuth";
 
 const fileRouter: Router = express.Router();
 
@@ -26,6 +27,6 @@ const upload = multer({
 });
 
 // Parse uploaded file
-fileRouter.post("/parse", upload.single("file"), parseFile);
+fileRouter.post("/parse", requireAuth, upload.single("file"), parseFile);
 
 export = fileRouter;

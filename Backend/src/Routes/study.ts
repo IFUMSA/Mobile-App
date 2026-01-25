@@ -9,23 +9,24 @@ import {
   toggleQuizSharing,
   saveSharedQuiz,
 } from "../Controllers/studyController";
+import { requireAuth } from "../Middlewares/requireAuth";
 
 const studyRouter: Router = express.Router();
 
 // Save generated quiz
-studyRouter.post("/quizzes", saveGeneratedQuiz);
+studyRouter.post("/quizzes", requireAuth, saveGeneratedQuiz);
 
 // Get user's quizzes
-studyRouter.get("/quizzes", getUserQuizzes);
+studyRouter.get("/quizzes", requireAuth, getUserQuizzes);
 
 // Get quiz by ID
-studyRouter.get("/quizzes/:id", getUserQuizById);
+studyRouter.get("/quizzes/:id", requireAuth, getUserQuizById);
 
 // Update quiz
-studyRouter.put("/quizzes/:id", updateUserQuiz);
+studyRouter.put("/quizzes/:id", requireAuth, updateUserQuiz);
 
 // Delete quiz
-studyRouter.delete("/quizzes/:id", deleteUserQuiz);
+studyRouter.delete("/quizzes/:id", requireAuth, deleteUserQuiz);
 
 // === Sharing Routes ===
 
@@ -33,9 +34,9 @@ studyRouter.delete("/quizzes/:id", deleteUserQuiz);
 studyRouter.get("/shared/:shareCode", getQuizByShareCode);
 
 // Toggle quiz sharing (owner only)
-studyRouter.post("/quizzes/:id/share", toggleQuizSharing);
+studyRouter.post("/quizzes/:id/share", requireAuth, toggleQuizSharing);
 
 // Save a shared quiz to user's collection
-studyRouter.post("/save-shared", saveSharedQuiz);
+studyRouter.post("/save-shared", requireAuth, saveSharedQuiz);
 
 export = studyRouter;

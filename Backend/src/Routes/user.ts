@@ -4,14 +4,15 @@ import {
   updateProfile,
   getUserById,
 } from "../Controllers/userController";
+import { requireAuth } from "../Middlewares/requireAuth";
 
 const userRouter: Router = express.Router();
 
 // Get current user profile
-userRouter.get("/profile", getProfile);
+userRouter.get("/profile", requireAuth, getProfile);
 
 // Update current user profile
-userRouter.put("/profile", updateProfile);
+userRouter.put("/profile", requireAuth, updateProfile);
 
 // Get user by ID (public profile)
 userRouter.get("/:id", getUserById);

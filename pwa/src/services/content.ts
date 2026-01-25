@@ -11,7 +11,7 @@ export const contentService = {
 
     // Get next event
     getNextEvent: async () => {
-        const response = await api.get("/api/content/next-event");
+        const response = await api.get("/api/content/events/next");
         return response.data;
     },
 
