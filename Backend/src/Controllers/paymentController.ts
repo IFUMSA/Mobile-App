@@ -25,10 +25,17 @@ export const getPaymentHistory = async (req: Request, res: Response) => {
         }
 
         // Build query
-        const query: { userId: any; status?: PaymentStatus } = { userId };
+        const query: { userId: any; status?: PaymentStatus | { $in: PaymentStatus[] } } = { userId };
         const validStatuses = ["pending", "submitted", "confirmed", "completed", "rejected"];
-        if (status && validStatuses.includes(status as string)) {
-            query.status = status as PaymentStatus;
+
+        if (status && status !== "all") {
+            // Handle comma-separated statuses (e.g. "pending,submitted")
+            const statusArray = (status as string).split(",").filter(s => validStatuses.includes(s));
+            if (statusArray.length === 1) {
+                query.status = statusArray[0] as PaymentStatus;
+            } else if (statusArray.length > 1) {
+                query.status = { $in: statusArray as PaymentStatus[] };
+            }
         }
 
         const payments = await Payment.find(query)

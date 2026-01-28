@@ -28,6 +28,10 @@ export const getProfile = async (req: Request, res: Response) => {
         lastName: user.lastName,
         profilePic: user.profilePic,
         bio: user.bio,
+        studentClass: user.studentClass,
+        matricNumber: user.matricNumber,
+        phone: user.phone,
+        level: user.level,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     });
@@ -43,7 +47,7 @@ export const getProfile = async (req: Request, res: Response) => {
 export const updateProfile = async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
-    const { firstName, lastName, userName, bio, profilePic } = req.body;
+    const { firstName, lastName, userName, bio, profilePic, studentClass, matricNumber, phone, level, hasCompletedOnboarding } = req.body;
 
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
@@ -65,8 +69,12 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (userName) updateData.userName = userName;
     if (bio !== undefined) updateData.bio = bio;
     if (profilePic) updateData.profilePic = profilePic;
-    if (req.body.hasCompletedOnboarding !== undefined) {
-      updateData.hasCompletedOnboarding = req.body.hasCompletedOnboarding;
+    if (studentClass !== undefined) updateData.studentClass = studentClass;
+    if (matricNumber !== undefined) updateData.matricNumber = matricNumber;
+    if (phone !== undefined) updateData.phone = phone;
+    if (level !== undefined) updateData.level = level;
+    if (hasCompletedOnboarding !== undefined) {
+      updateData.hasCompletedOnboarding = hasCompletedOnboarding;
     }
 
     const user = await User.findByIdAndUpdate(
@@ -90,6 +98,10 @@ export const updateProfile = async (req: Request, res: Response) => {
         lastName: user.lastName,
         profilePic: user.profilePic,
         bio: user.bio,
+        studentClass: user.studentClass,
+        matricNumber: user.matricNumber,
+        phone: user.phone,
+        level: user.level,
         hasCompletedOnboarding: user.hasCompletedOnboarding,
       },
     });

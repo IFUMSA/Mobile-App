@@ -37,6 +37,10 @@ const UserSchema: Schema = new Schema<IUser>(
       type: String,
       default: null,
     },
+    level: {
+      type: String,
+      default: null,
+    },
     isVerified: {
       type: Boolean,
       required: true,
