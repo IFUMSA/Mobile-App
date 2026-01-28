@@ -72,4 +72,21 @@ export const studyService = {
         const response = await api.delete(`/api/study/quizzes/${id}`);
         return response.data;
     },
+
+    // Toggle quiz sharing (enable/disable) - returns share code
+    toggleQuizSharing: async (id: string): Promise<{
+        message: string;
+        isShared: boolean;
+        shareCode: string | null;
+        shareLink: string | null;
+    }> => {
+        const response = await api.post(`/api/study/quizzes/${id}/share`);
+        return response.data;
+    },
+
+    // Get shared quiz by share code (PUBLIC - no auth required)
+    getSharedQuiz: async (shareCode: string): Promise<{ quiz: UserQuiz }> => {
+        const response = await api.get(`/api/study/shared/${shareCode}`);
+        return response.data;
+    },
 };

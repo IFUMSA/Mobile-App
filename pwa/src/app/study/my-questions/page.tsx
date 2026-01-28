@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { useUserQuizzes, useDeleteQuizMutation } from "@/hooks/use-study";
 import { studyService } from "@/services/study";
+import clipboardCopy from "clipboard-copy";
 import { ChevronLeft, FileText, MoreVertical, Clock, Edit2, Download, Share2, Trash2, Copy, BookOpen, HelpCircle, Loader2, AlertCircle, Check } from "lucide-react";
 
 interface Question {
@@ -109,43 +110,50 @@ export default function MyQuestionsPage() {
         }
 
         const text = formatQuestionsAsText(quiz);
+        setShowOptionsModal(false);
 
-        // Try modern clipboard API first, fallback to textarea method
         try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(text);
-            } else {
-                // Fallback for PWA/mobile
-                const textarea = document.createElement("textarea");
-                textarea.value = text;
-                textarea.style.position = "fixed";
-                textarea.style.left = "-9999px";
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand("copy");
-                document.body.removeChild(textarea);
-            }
+            await clipboardCopy(text);
             setIsCopied(true);
-            setShowOptionsModal(false);
             setTimeout(() => setIsCopied(false), 2000);
         } catch (error) {
             console.error("Copy failed:", error);
-            alert("Failed to copy questions");
+            // Fallback to share on mobile
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: quiz.title, text });
+                } catch (e) {
+                    if ((e as Error).name !== "AbortError") {
+                        alert("Failed to copy questions");
+                    }
+                }
+            } else {
+                alert("Failed to copy questions");
+            }
         }
     };
 
     // Handle share link
     const handleShare = async () => {
         const listQuiz = getSelectedQuizData();
-        if (!listQuiz) {
+        if (!listQuiz || !selectedQuiz) {
             alert("No quiz selected");
             return;
         }
 
-        // Share link points to quiz mode
-        const shareUrl = `${window.location.origin}/study/practice?quizId=${selectedQuiz}&mode=quiz`;
-
+        setIsLoadingQuiz(true);
         try {
+            // Enable sharing and get share code
+            const shareResult = await studyService.toggleQuizSharing(selectedQuiz);
+
+            if (!shareResult.isShared || !shareResult.shareCode) {
+                alert("Failed to enable sharing");
+                return;
+            }
+
+            // Share link uses the share code for public access
+            const shareUrl = `${window.location.origin}/study/shared/${shareResult.shareCode}`;
+
             if (navigator.share) {
                 await navigator.share({
                     title: listQuiz.title,
@@ -173,8 +181,10 @@ export default function MyQuestionsPage() {
                 console.error("Share failed:", error);
                 alert("Failed to share quiz");
             }
+        } finally {
+            setIsLoadingQuiz(false);
+            setShowOptionsModal(false);
         }
-        setShowOptionsModal(false);
     };
 
     // Handle save as PDF
