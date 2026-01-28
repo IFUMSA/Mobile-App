@@ -11,7 +11,6 @@ export interface UserProfile {
     bio?: string;
     profilePic?: string;
     level?: string;
-    faculty?: string;
     studentClass?: string;
     matricNumber?: string;
     phone?: string;
@@ -31,9 +30,12 @@ export const userService = {
         return response.data;
     },
 
-    // Complete onboarding
+    // Complete onboarding (uses updateProfile with hasCompletedOnboarding flag)
     completeOnboarding: async (profileData: Partial<UserProfile>): Promise<{ user: UserProfile }> => {
-        const response = await api.post("/api/user/complete-onboarding", profileData);
+        const response = await api.put("/api/user/profile", {
+            ...profileData,
+            hasCompletedOnboarding: true,
+        });
         return response.data;
     },
 

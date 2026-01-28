@@ -7,7 +7,22 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { useUserQuizzes, useDeleteQuizMutation } from "@/hooks/use-study";
-import { ChevronLeft, FileText, MoreVertical, Clock, Edit2, Download, Share2, Trash2, BookOpen, HelpCircle, Loader2, AlertCircle } from "lucide-react";
+import { ChevronLeft, FileText, MoreVertical, Clock, Edit2, Download, Share2, Trash2, Copy, BookOpen, HelpCircle, Loader2, AlertCircle, Check } from "lucide-react";
+
+interface Question {
+    question: string;
+    options?: string[];
+    correctAnswer?: number | string;
+}
+
+interface Quiz {
+    id?: string;
+    _id?: string;
+    title: string;
+    questions?: Question[];
+    questionCount?: number;
+    duration?: number;
+}
 
 export default function MyQuestionsPage() {
     const router = useRouter();
@@ -15,10 +30,12 @@ export default function MyQuestionsPage() {
     const [showOptionsModal, setShowOptionsModal] = useState(false);
     const [showModeModal, setShowModeModal] = useState(false);
     const [selectedMode, setSelectedMode] = useState<string | null>(null);
+    const [isCopied, setIsCopied] = useState(false);
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
     const { data: quizzesData, isLoading, error, refetch } = useUserQuizzes();
     const deleteQuiz = useDeleteQuizMutation();
-    const quizzes = quizzesData?.quizzes || [];
+    const quizzes = (quizzesData?.quizzes || []) as Quiz[];
 
     const handleQuizPress = (quizId: string) => {
         setSelectedQuiz(quizId);
@@ -37,6 +54,144 @@ export default function MyQuestionsPage() {
             await deleteQuiz.mutateAsync(selectedQuiz);
             setShowOptionsModal(false);
             refetch();
+        }
+    };
+
+    // Get the currently selected quiz data
+    const getSelectedQuizData = (): Quiz | null => {
+        return quizzes.find(q => (q.id || q._id) === selectedQuiz) || null;
+    };
+
+    // Format questions as text for copying
+    const formatQuestionsAsText = (quiz: Quiz): string => {
+        if (!quiz.questions) return "";
+
+        return `${quiz.title}\n${"=".repeat(quiz.title.length)}\n\n` +
+            quiz.questions.map((q, i) => {
+                let text = `${i + 1}. ${q.question}\n`;
+                if (q.options) {
+                    text += q.options.map((opt, j) =>
+                        `   ${String.fromCharCode(65 + j)}. ${opt}`
+                    ).join("\n");
+                }
+                return text;
+            }).join("\n\n");
+    };
+
+    // Handle copy to clipboard
+    const handleCopy = async () => {
+        const quiz = getSelectedQuizData();
+        if (!quiz) return;
+
+        try {
+            const text = formatQuestionsAsText(quiz);
+            await navigator.clipboard.writeText(text);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        } catch (error) {
+            console.error("Copy failed:", error);
+            alert("Failed to copy questions");
+        }
+    };
+
+    // Handle share link
+    const handleShare = async () => {
+        const quiz = getSelectedQuizData();
+        if (!quiz) return;
+
+        const shareUrl = `${window.location.origin}/study/preview-questions?quizId=${selectedQuiz}`;
+        const text = formatQuestionsAsText(quiz);
+
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: quiz.title,
+                    text: `Check out this quiz: ${quiz.title}`,
+                    url: shareUrl,
+                });
+            } else {
+                await navigator.clipboard.writeText(shareUrl);
+                alert("Share link copied to clipboard!");
+            }
+        } catch (error) {
+            if ((error as Error).name !== "AbortError") {
+                console.error("Share failed:", error);
+                // Fallback to copying
+                await navigator.clipboard.writeText(text);
+                alert("Questions copied to clipboard!");
+            }
+        }
+        setShowOptionsModal(false);
+    };
+
+    // Handle save as PDF
+    const handleSavePDF = async () => {
+        const quiz = getSelectedQuizData();
+        if (!quiz || !quiz.questions) {
+            alert("No questions to export");
+            return;
+        }
+
+        setIsGeneratingPDF(true);
+        try {
+            // Create printable HTML content
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>${quiz.title}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+                        h1 { color: #1F382E; border-bottom: 2px solid #2A996B; padding-bottom: 10px; }
+                        .question { margin-bottom: 30px; }
+                        .question-number { font-weight: bold; color: #2A996B; }
+                        .question-text { font-size: 16px; margin-bottom: 10px; }
+                        .options { margin-left: 20px; }
+                        .option { padding: 5px 0; }
+                        .option-letter { font-weight: bold; margin-right: 10px; }
+                        @media print { body { padding: 20px; } }
+                    </style>
+                </head>
+                <body>
+                    <h1>${quiz.title}</h1>
+                    ${quiz.questions.map((q, i) => `
+                        <div class="question">
+                            <div class="question-text">
+                                <span class="question-number">Q${i + 1}.</span> ${q.question}
+                            </div>
+                            ${q.options ? `
+                                <div class="options">
+                                    ${q.options.map((opt, j) => `
+                                        <div class="option">
+                                            <span class="option-letter">${String.fromCharCode(65 + j)}.</span> ${opt}
+                                        </div>
+                                    `).join("")}
+                                </div>
+                            ` : ""}
+                        </div>
+                    `).join("")}
+                </body>
+                </html>
+            `;
+
+            // Open print dialog
+            const printWindow = window.open("", "_blank");
+            if (printWindow) {
+                printWindow.document.write(printContent);
+                printWindow.document.close();
+                printWindow.focus();
+                setTimeout(() => {
+                    printWindow.print();
+                }, 500);
+            } else {
+                alert("Please allow popups to save as PDF");
+            }
+        } catch (error) {
+            console.error("PDF generation failed:", error);
+            alert("Failed to generate PDF");
+        } finally {
+            setIsGeneratingPDF(false);
+            setShowOptionsModal(false);
         }
     };
 
@@ -95,7 +250,7 @@ export default function MyQuestionsPage() {
                                         <div className="flex items-center gap-3 mt-1">
                                             <div className="flex items-center">
                                                 <Text variant="caption" fontWeight="600" color="secondary">
-                                                    {quiz.questions?.length || 0}
+                                                    {quiz.questionCount ?? quiz.questions?.length ?? 0}
                                                 </Text>
                                                 <Text variant="caption" color="gray" className="ml-1">questions</Text>
                                             </div>
@@ -121,92 +276,120 @@ export default function MyQuestionsPage() {
                             );
                         })}
                     </div>
-                )}
-            </div>
+                )
+                }
+            </div >
 
             {/* Options Modal */}
-            {showOptionsModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowOptionsModal(false)}>
-                    <div className="w-full bg-white rounded-t-3xl p-6 pb-10" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-between items-center mb-6">
-                            <button onClick={() => setShowOptionsModal(false)} className="p-1 bg-transparent border-0 cursor-pointer">
-                                <ChevronLeft size={24} className="text-[#1F382E]" />
+            {
+                showOptionsModal && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-end" onClick={() => setShowOptionsModal(false)}>
+                        <div className="w-full bg-white rounded-t-3xl p-6 pb-10" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-6">
+                                <button onClick={() => setShowOptionsModal(false)} className="p-1 bg-transparent border-0 cursor-pointer">
+                                    <ChevronLeft size={24} className="text-[#1F382E]" />
+                                </button>
+                                <Text variant="body" fontWeight="600">Options</Text>
+                                <div className="w-6" />
+                            </div>
+
+                            <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer" onClick={() => {
+                                setShowOptionsModal(false);
+                                router.push(`/study/edit-questions?quizId=${selectedQuiz}`);
+                            }}>
+                                <Edit2 size={20} className="text-[#1F382E]" />
+                                <Text variant="body2" className="ml-4">Edit Questions</Text>
                             </button>
-                            <Text variant="body" fontWeight="600">Options</Text>
-                            <div className="w-6" />
+
+                            <button
+                                className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
+                                onClick={handleSavePDF}
+                                disabled={isGeneratingPDF}
+                            >
+                                <Download size={20} className="text-[#1F382E]" />
+                                <Text variant="body2" className="ml-4">
+                                    {isGeneratingPDF ? "Generating..." : "Save as PDF"}
+                                </Text>
+                            </button>
+
+                            <button
+                                className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
+                                onClick={handleCopy}
+                            >
+                                {isCopied ? (
+                                    <Check size={20} className="text-green-500" />
+                                ) : (
+                                    <Copy size={20} className="text-[#1F382E]" />
+                                )}
+                                <Text variant="body2" className="ml-4">
+                                    {isCopied ? "Copied!" : "Copy Questions"}
+                                </Text>
+                            </button>
+
+                            <button
+                                className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
+                                onClick={handleShare}
+                            >
+                                <Share2 size={20} className="text-[#1F382E]" />
+                                <Text variant="body2" className="ml-4">Share Link</Text>
+                            </button>
+
+                            <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer" onClick={handleDelete}>
+                                <Trash2 size={20} className="text-red-500" />
+                                <Text variant="body2" className="ml-4 text-red-500">Delete</Text>
+                            </button>
                         </div>
-
-                        <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer" onClick={() => {
-                            setShowOptionsModal(false);
-                            router.push(`/study/edit-questions?quizId=${selectedQuiz}`);
-                        }}>
-                            <Edit2 size={20} className="text-[#1F382E]" />
-                            <Text variant="body2" className="ml-4">Edit Questions</Text>
-                        </button>
-
-                        <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer">
-                            <Download size={20} className="text-[#1F382E]" />
-                            <Text variant="body2" className="ml-4">Save as PDF</Text>
-                        </button>
-
-                        <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer">
-                            <Share2 size={20} className="text-[#1F382E]" />
-                            <Text variant="body2" className="ml-4">Copy/Share Link</Text>
-                        </button>
-
-                        <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer" onClick={handleDelete}>
-                            <Trash2 size={20} className="text-red-500" />
-                            <Text variant="body2" className="ml-4 text-red-500">Delete</Text>
-                        </button>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Mode Selection Modal */}
-            {showModeModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
-                    <div className="w-full bg-white rounded-t-[40px] px-10 pt-[50px] pb-16" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center justify-center mb-10">
-                            <button onClick={() => setShowModeModal(false)} className="p-1 bg-transparent border-0 cursor-pointer absolute left-6">
-                                <ChevronLeft size={24} className="text-[#1F382E]" />
-                            </button>
-                            <Text variant="body" fontWeight="600">Choose Your Mode of Practice</Text>
+            {
+                showModeModal && (
+                    <div className="fixed inset-0 bg-black/50 z-50 flex items-end">
+                        <div className="w-full bg-white rounded-t-[40px] px-10 pt-[50px] pb-16" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-center mb-10">
+                                <button onClick={() => setShowModeModal(false)} className="p-1 bg-transparent border-0 cursor-pointer absolute left-6">
+                                    <ChevronLeft size={24} className="text-[#1F382E]" />
+                                </button>
+                                <Text variant="body" fontWeight="600">Choose Your Mode of Practice</Text>
+                            </div>
+
+                            <div className="flex flex-col gap-5 mb-8">
+                                <button
+                                    className={`flex items-center py-3 px-3 rounded-xl border ${selectedMode === "practice" ? "border-[#2A996B] bg-[#2A996B]/10" : "border-[#D9D9D9] bg-white"
+                                        }`}
+                                    onClick={() => setSelectedMode("practice")}
+                                >
+                                    <div className={`w-4 h-4 rounded-full border mr-5 flex items-center justify-center ${selectedMode === "practice" ? "border-[#2A996B]" : "border-black"
+                                        }`}>
+                                        {selectedMode === "practice" && <div className="w-2.5 h-2.5 rounded-full bg-[#2A996B]" />}
+                                    </div>
+                                    <BookOpen size={24} className="text-[#1F382E] mr-3" />
+                                    <Text variant="body" fontWeight="500">Practice Mode</Text>
+                                </button>
+
+                                <button
+                                    className={`flex items-center py-3 px-3 rounded-xl border ${selectedMode === "quiz" ? "border-[#2A996B] bg-[#2A996B]/10" : "border-[#D9D9D9] bg-white"
+                                        }`}
+                                    onClick={() => setSelectedMode("quiz")}
+                                >
+                                    <div className={`w-4 h-4 rounded-full border mr-5 flex items-center justify-center ${selectedMode === "quiz" ? "border-[#2A996B]" : "border-black"
+                                        }`}>
+                                        {selectedMode === "quiz" && <div className="w-2.5 h-2.5 rounded-full bg-[#2A996B]" />}
+                                    </div>
+                                    <HelpCircle size={24} className="text-[#1F382E] mr-3" />
+                                    <Text variant="body" fontWeight="500">Quiz Mode</Text>
+                                </button>
+                            </div>
+
+                            <Button variant="secondary" fullWidth onClick={handleStartQuiz} disabled={!selectedMode}>
+                                Continue
+                            </Button>
                         </div>
-
-                        <div className="flex flex-col gap-5 mb-8">
-                            <button
-                                className={`flex items-center py-3 px-3 rounded-xl border ${selectedMode === "practice" ? "border-[#2A996B] bg-[#2A996B]/10" : "border-[#D9D9D9] bg-white"
-                                    }`}
-                                onClick={() => setSelectedMode("practice")}
-                            >
-                                <div className={`w-4 h-4 rounded-full border mr-5 flex items-center justify-center ${selectedMode === "practice" ? "border-[#2A996B]" : "border-black"
-                                    }`}>
-                                    {selectedMode === "practice" && <div className="w-2.5 h-2.5 rounded-full bg-[#2A996B]" />}
-                                </div>
-                                <BookOpen size={24} className="text-[#1F382E] mr-3" />
-                                <Text variant="body" fontWeight="500">Practice Mode</Text>
-                            </button>
-
-                            <button
-                                className={`flex items-center py-3 px-3 rounded-xl border ${selectedMode === "quiz" ? "border-[#2A996B] bg-[#2A996B]/10" : "border-[#D9D9D9] bg-white"
-                                    }`}
-                                onClick={() => setSelectedMode("quiz")}
-                            >
-                                <div className={`w-4 h-4 rounded-full border mr-5 flex items-center justify-center ${selectedMode === "quiz" ? "border-[#2A996B]" : "border-black"
-                                    }`}>
-                                    {selectedMode === "quiz" && <div className="w-2.5 h-2.5 rounded-full bg-[#2A996B]" />}
-                                </div>
-                                <HelpCircle size={24} className="text-[#1F382E] mr-3" />
-                                <Text variant="body" fontWeight="500">Quiz Mode</Text>
-                            </button>
-                        </div>
-
-                        <Button variant="secondary" fullWidth onClick={handleStartQuiz} disabled={!selectedMode}>
-                            Continue
-                        </Button>
                     </div>
-                </div>
-            )}
-        </Container>
+                )
+            }
+        </Container >
     );
 }

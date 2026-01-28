@@ -17,7 +17,7 @@ export const contentService = {
 
     // Get all events
     getEvents: async () => {
-        const response = await api.get("/api/events");
+        const response = await api.get("/api/content/events");
         return response.data;
     },
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,8 @@ export function AnnouncementCarousel() {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isCreatingPayment, setIsCreatingPayment] = useState(false);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    const touchStartRef = useRef<number | null>(null);
+    const touchEndRef = useRef<number | null>(null);
 
     const { data: announcementsData } = useAnnouncements();
 
@@ -43,16 +45,51 @@ export function AnnouncementCarousel() {
         return fallbackData;
     }, [announcementsData]);
 
-    // Auto-scroll
-    useEffect(() => {
+    // Reset auto-scroll timer
+    const resetTimer = useCallback(() => {
+        if (intervalRef.current) clearInterval(intervalRef.current);
         intervalRef.current = setInterval(() => {
             setCurrentIndex((prev) => (prev + 1) % data.length);
         }, 4000);
+    }, [data.length]);
 
+    // Auto-scroll
+    useEffect(() => {
+        resetTimer();
         return () => {
             if (intervalRef.current) clearInterval(intervalRef.current);
         };
-    }, [data.length]);
+    }, [resetTimer]);
+
+    // Handle swipe
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartRef.current = e.touches[0].clientX;
+    };
+
+    const handleTouchMove = (e: React.TouchEvent) => {
+        touchEndRef.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = () => {
+        if (touchStartRef.current === null || touchEndRef.current === null) return;
+
+        const diff = touchStartRef.current - touchEndRef.current;
+        const minSwipeDistance = 50;
+
+        if (Math.abs(diff) > minSwipeDistance) {
+            if (diff > 0) {
+                // Swiped left - go next
+                setCurrentIndex((prev) => (prev + 1) % data.length);
+            } else {
+                // Swiped right - go prev
+                setCurrentIndex((prev) => (prev - 1 + data.length) % data.length);
+            }
+            resetTimer();
+        }
+
+        touchStartRef.current = null;
+        touchEndRef.current = null;
+    };
 
     const handlePayNow = async () => {
         setIsCreatingPayment(true);
@@ -63,10 +100,20 @@ export function AnnouncementCarousel() {
         }
     };
 
+    const handleDotClick = (index: number) => {
+        setCurrentIndex(index);
+        resetTimer();
+    };
+
     const currentItem = data[currentIndex];
 
     return (
-        <div className="bg-white rounded-3xl -mt-[50px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] p-4 pt-[18px] pb-3">
+        <div
+            className="bg-white rounded-3xl -mt-[50px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] p-4 pt-[18px] pb-3"
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+        >
             <div className="flex items-start min-h-[100px]">
                 {currentIndex !== 0 && (
                     <div className="mr-2">
@@ -89,7 +136,7 @@ export function AnnouncementCarousel() {
                     {data.map((_: { id: string; title: string; description: string }, index: number) => (
                         <button
                             key={index}
-                            onClick={() => setCurrentIndex(index)}
+                            onClick={() => handleDotClick(index)}
                             className={`w-1.5 h-1.5 rounded-full border-0 cursor-pointer transition-colors ${index === currentIndex
                                 ? "bg-[#2A996B]"
                                 : "bg-[#D9D9D9]/50"

@@ -9,39 +9,40 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { useAuth } from "@/context/auth-context";
 import { userService } from "@/services/user";
+import { ChevronLeft } from "lucide-react";
 
 interface ProfileFormData {
     firstName: string;
     lastName: string;
     level: string;
-    faculty: string;
 }
 
 const levels = ["100", "200", "300", "400", "500", "600"];
-const faculties = ["Medicine", "Dentistry", "Pharmacy", "Nursing"];
 
 export default function OnboardingProfilePage() {
     const router = useRouter();
     const { refreshUser } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const { control, handleSubmit } = useForm<ProfileFormData>({
         defaultValues: {
             firstName: "",
             lastName: "",
             level: "",
-            faculty: "",
         },
     });
 
     const onSubmit = async (data: ProfileFormData) => {
         setIsLoading(true);
+        setError(null);
         try {
             await userService.completeOnboarding(data);
             await refreshUser();
             router.replace("/home");
-        } catch (error) {
-            console.error("Onboarding error:", error);
+        } catch (err) {
+            console.error("Onboarding error:", err);
+            setError("Failed to save profile. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -49,12 +50,14 @@ export default function OnboardingProfilePage() {
 
     const handleSkip = async () => {
         setIsLoading(true);
+        setError(null);
         try {
             await userService.completeOnboarding({ hasCompletedOnboarding: true });
             await refreshUser();
             router.replace("/home");
-        } catch (error) {
-            console.error("Skip error:", error);
+        } catch (err) {
+            console.error("Skip error:", err);
+            setError("Failed to skip. Please try again.");
         } finally {
             setIsLoading(false);
         }
@@ -62,7 +65,13 @@ export default function OnboardingProfilePage() {
 
     return (
         <Container className="min-h-screen">
-            <div className="pt-[72px]">
+            <div className="pt-[56px]">
+                <button
+                    onClick={() => router.back()}
+                    className="w-11 h-11 flex items-center justify-center bg-transparent border-0 cursor-pointer mb-4"
+                >
+                    <ChevronLeft size={24} className="text-[#1F382E]" />
+                </button>
                 <Text variant="heading" className="mb-2">
                     Complete Your Profile
                 </Text>
@@ -70,6 +79,12 @@ export default function OnboardingProfilePage() {
                     Tell us a bit about yourself
                 </Text>
             </div>
+
+            {error && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <Text variant="body2" className="text-red-600">{error}</Text>
+                </div>
+            )}
 
             <div className="flex flex-col gap-5 mt-8">
                 <Controller
@@ -112,39 +127,12 @@ export default function OnboardingProfilePage() {
                                     <button
                                         type="button"
                                         className={`px-4 py-2 rounded-full border transition-colors ${value === level
-                                                ? "bg-[#2A996B] text-white border-[#2A996B]"
-                                                : "bg-white text-[#1F382E] border-[#D9D9D9]"
+                                            ? "bg-[#2A996B] text-white border-[#2A996B]"
+                                            : "bg-white text-[#1F382E] border-[#D9D9D9]"
                                             }`}
                                         onClick={() => onChange(level)}
                                     >
                                         {level}L
-                                    </button>
-                                )}
-                            />
-                        ))}
-                    </div>
-                </div>
-
-                <div>
-                    <Text variant="body2" className="mb-2">
-                        Faculty
-                    </Text>
-                    <div className="flex flex-wrap gap-2">
-                        {faculties.map((faculty) => (
-                            <Controller
-                                key={faculty}
-                                control={control}
-                                name="faculty"
-                                render={({ field: { onChange, value } }) => (
-                                    <button
-                                        type="button"
-                                        className={`px-4 py-2 rounded-full border transition-colors ${value === faculty
-                                                ? "bg-[#2A996B] text-white border-[#2A996B]"
-                                                : "bg-white text-[#1F382E] border-[#D9D9D9]"
-                                            }`}
-                                        onClick={() => onChange(faculty)}
-                                    >
-                                        {faculty}
                                     </button>
                                 )}
                             />

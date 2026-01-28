@@ -8,8 +8,8 @@ export interface Payment {
     amount: number;
     title: string;
     status: "pending" | "submitted" | "confirmed" | "completed" | "rejected";
-    method: "card" | "bank";
-    createdAt: string;
+    method?: "card" | "bank";
+    date: string;
     proofImage?: string;
 }
 

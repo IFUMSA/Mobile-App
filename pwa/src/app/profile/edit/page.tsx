@@ -8,8 +8,19 @@ import { Container } from "@/components/ui/container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useUpdateProfileMutation } from "@/hooks/use-profile";
 import { useAuth } from "@/context/auth-context";
-import { User, Camera } from "lucide-react";
+import { User, Camera, Loader2 } from "lucide-react";
 import Image from "next/image";
+import api from "@/lib/api";
+
+// Helper to convert file to base64
+function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+    });
+}
 
 export default function ProfileEditPage() {
     const router = useRouter();
@@ -22,6 +33,7 @@ export default function ProfileEditPage() {
     const [matricNumber, setMatricNumber] = useState("");
     const [phone, setPhone] = useState("");
     const [profilePic, setProfilePic] = useState<string | null>(null);
+    const [isUploading, setIsUploading] = useState(false);
 
     // Initialize form with user data
     useEffect(() => {
@@ -58,14 +70,43 @@ export default function ProfileEditPage() {
         }
     };
 
-    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = () => {
-                setProfilePic(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file");
+            return;
+        }
+
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            alert("Image must be less than 5MB");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            // Convert to base64
+            const base64 = await fileToBase64(file);
+
+            // Upload to Cloudinary via backend
+            const response = await api.post("/api/upload/image", {
+                image: base64,
+                folder: "profiles",
+            });
+
+            if (response.data.success && response.data.url) {
+                setProfilePic(response.data.url);
+            } else {
+                throw new Error(response.data.error || "Upload failed");
+            }
+        } catch (error) {
+            console.error("Image upload error:", error);
+            alert("Failed to upload image. Please try again.");
+        } finally {
+            setIsUploading(false);
         }
     };
 
@@ -77,8 +118,12 @@ export default function ProfileEditPage() {
             <div className="flex flex-col items-center py-6">
                 <div className="relative">
                     <div className="w-[100px] h-[100px] rounded-full overflow-hidden bg-[#D9D9D9]">
-                        {profilePic ? (
-                            <Image src={profilePic} alt="Profile" width={100} height={100} className="object-cover" />
+                        {isUploading ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <Loader2 size={32} className="text-[#2A996B] animate-spin" />
+                            </div>
+                        ) : profilePic ? (
+                            <Image src={profilePic} alt="Profile" width={100} height={100} className="object-cover w-full h-full" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center">
                                 <User size={48} className="text-[#1F382E]" />
@@ -87,11 +132,17 @@ export default function ProfileEditPage() {
                     </div>
                     <label className="absolute bottom-0 right-0 w-8 h-8 bg-[#2A996B] rounded-full flex items-center justify-center cursor-pointer border-[3px] border-white">
                         <Camera size={16} className="text-white" />
-                        <input type="file" accept="image/*" className="hidden" onChange={handleImageChange} />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleImageChange}
+                            disabled={isUploading}
+                        />
                     </label>
                 </div>
                 <Text variant="caption" color="gray" className="mt-2">
-                    Tap to change profile photo
+                    {isUploading ? "Uploading..." : "Tap to change profile photo"}
                 </Text>
             </div>
 
@@ -155,6 +206,7 @@ export default function ProfileEditPage() {
                     fullWidth
                     onClick={handleSubmit}
                     loading={updateProfile.isPending}
+                    disabled={isUploading}
                 >
                     Save Changes
                 </Button>
