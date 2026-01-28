@@ -173,10 +173,10 @@ function SharedQuizContent() {
                             className="w-full py-4"
                             onClick={() => startQuiz("practice")}
                         >
-                            Practice Mode
-                            <Text variant="caption" color="gray" className="block mt-1">
+                            Practice Mode {" "}
+                            {/* <Text variant="caption" color="gray" className="block mt-1 ml-2">
                                 See answers immediately
-                            </Text>
+                            </Text> */}
                         </Button>
 
                         <Button
@@ -184,10 +184,10 @@ function SharedQuizContent() {
                             className="w-full py-4"
                             onClick={() => startQuiz("quiz")}
                         >
-                            Quiz Mode
-                            <Text variant="caption" className="block mt-1 text-white/80">
+                            Quiz Mode {" "}
+                            {/* <Text variant="caption" className="block mt-1 ml-2 text-white/80">
                                 Timed with results at end
-                            </Text>
+                            </Text> */}
                         </Button>
                     </div>
                 </div>
@@ -211,8 +211,12 @@ function SharedQuizContent() {
                     <Button variant="outlined" onClick={() => setMode("select")}>
                         Try Again
                     </Button>
-                    <Button variant="secondary" onClick={() => router.push("/study")}>
-                        Go to Study
+                    <Button variant="secondary" onClick={() => {
+                        setShowResult(false);
+                        setCurrentIndex(0);
+                        setMode("practice"); // Switch to practice mode to show corrections
+                    }}>
+                        View Corrections
                     </Button>
                 </div>
             </Container>
@@ -284,7 +288,7 @@ function SharedQuizContent() {
                     })}
                 </div>
 
-                {mode === "practice" && answers[currentIndex] !== undefined && (
+                {mode === "practice" && (
                     <div className="mt-6 p-4 bg-[#2A996B]/10 rounded-xl">
                         <Text variant="body2" fontWeight="600" color="secondary" className="mb-2">
                             Correct Answer: {String.fromCharCode(65 + currentQuestion.correctAnswer)}

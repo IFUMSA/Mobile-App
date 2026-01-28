@@ -79,14 +79,19 @@ export default function LandingScreen() {
     return () => clearTimeout(timer);
   }, [animateToNextScreen, currentScreen, isAnimating, isLoading, router]);
 
-  // If loading auth, show a simple loading state
+  // If loading auth, show logo with pulse animation
   if (isLoading) {
     return (
       <div className="h-[100dvh] bg-[#1F382E] flex items-center justify-center">
         <div className="animate-pulse">
-          <Text variant="heading" color="textPrimary" fontWeight="700">
-            Loading...
-          </Text>
+          <Image
+            src="/images/ifumsa-logo.png"
+            alt="IFUMSA"
+            width={200}
+            height={133}
+            className="object-contain"
+            priority
+          />
         </div>
       </div>
     );
