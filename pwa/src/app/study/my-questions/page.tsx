@@ -7,6 +7,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { useUserQuizzes, useDeleteQuizMutation } from "@/hooks/use-study";
+import { studyService } from "@/services/study";
 import { ChevronLeft, FileText, MoreVertical, Clock, Edit2, Download, Share2, Trash2, Copy, BookOpen, HelpCircle, Loader2, AlertCircle, Check } from "lucide-react";
 
 interface Question {
@@ -32,6 +33,7 @@ export default function MyQuestionsPage() {
     const [selectedMode, setSelectedMode] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+    const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
 
     const { data: quizzesData, isLoading, error, refetch } = useUserQuizzes();
     const deleteQuiz = useDeleteQuizMutation();
@@ -57,9 +59,29 @@ export default function MyQuestionsPage() {
         }
     };
 
-    // Get the currently selected quiz data
+    // Get the currently selected quiz data (from list - no questions)
     const getSelectedQuizData = (): Quiz | null => {
         return quizzes.find(q => (q.id || q._id) === selectedQuiz) || null;
+    };
+
+    // Fetch full quiz data with questions
+    const fetchFullQuiz = async (): Promise<Quiz | null> => {
+        if (!selectedQuiz) return null;
+        try {
+            setIsLoadingQuiz(true);
+            const { quiz } = await studyService.getUserQuizById(selectedQuiz);
+            return {
+                id: quiz.id || quiz._id,
+                title: quiz.title,
+                questions: quiz.questions,
+                duration: quiz.duration,
+            } as Quiz;
+        } catch (error) {
+            console.error("Failed to fetch quiz:", error);
+            return null;
+        } finally {
+            setIsLoadingQuiz(false);
+        }
     };
 
     // Format questions as text for copying
@@ -80,8 +102,11 @@ export default function MyQuestionsPage() {
 
     // Handle copy to clipboard
     const handleCopy = async () => {
-        const quiz = getSelectedQuizData();
-        if (!quiz) return;
+        const quiz = await fetchFullQuiz();
+        if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+            alert("No questions to copy");
+            return;
+        }
 
         try {
             const text = formatQuestionsAsText(quiz);
@@ -96,11 +121,13 @@ export default function MyQuestionsPage() {
 
     // Handle share link
     const handleShare = async () => {
-        const quiz = getSelectedQuizData();
-        if (!quiz) return;
+        const quiz = await fetchFullQuiz();
+        if (!quiz || !quiz.questions || quiz.questions.length === 0) {
+            alert("No questions to share");
+            return;
+        }
 
-        const shareUrl = `${window.location.origin}/study/preview-questions?quizId=${selectedQuiz}`;
-        const text = formatQuestionsAsText(quiz);
+        const shareUrl = `${window.location.origin}/study/quiz/${selectedQuiz}`;
 
         try {
             if (navigator.share) {
@@ -116,9 +143,13 @@ export default function MyQuestionsPage() {
         } catch (error) {
             if ((error as Error).name !== "AbortError") {
                 console.error("Share failed:", error);
-                // Fallback to copying
-                await navigator.clipboard.writeText(text);
-                alert("Questions copied to clipboard!");
+                // Fallback to copying the link
+                try {
+                    await navigator.clipboard.writeText(shareUrl);
+                    alert("Link copied to clipboard!");
+                } catch {
+                    alert("Failed to share");
+                }
             }
         }
         setShowOptionsModal(false);
@@ -126,8 +157,8 @@ export default function MyQuestionsPage() {
 
     // Handle save as PDF
     const handleSavePDF = async () => {
-        const quiz = getSelectedQuizData();
-        if (!quiz || !quiz.questions) {
+        const quiz = await fetchFullQuiz();
+        if (!quiz || !quiz.questions || quiz.questions.length === 0) {
             alert("No questions to export");
             return;
         }
