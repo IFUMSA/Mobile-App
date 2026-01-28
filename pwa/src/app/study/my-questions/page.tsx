@@ -108,10 +108,25 @@ export default function MyQuestionsPage() {
             return;
         }
 
+        const text = formatQuestionsAsText(quiz);
+
+        // Try modern clipboard API first, fallback to textarea method
         try {
-            const text = formatQuestionsAsText(quiz);
-            await navigator.clipboard.writeText(text);
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+            } else {
+                // Fallback for PWA/mobile
+                const textarea = document.createElement("textarea");
+                textarea.value = text;
+                textarea.style.position = "fixed";
+                textarea.style.left = "-9999px";
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand("copy");
+                document.body.removeChild(textarea);
+            }
             setIsCopied(true);
+            setShowOptionsModal(false);
             setTimeout(() => setIsCopied(false), 2000);
         } catch (error) {
             console.error("Copy failed:", error);
@@ -121,35 +136,42 @@ export default function MyQuestionsPage() {
 
     // Handle share link
     const handleShare = async () => {
-        const quiz = await fetchFullQuiz();
-        if (!quiz || !quiz.questions || quiz.questions.length === 0) {
-            alert("No questions to share");
+        const listQuiz = getSelectedQuizData();
+        if (!listQuiz) {
+            alert("No quiz selected");
             return;
         }
 
-        const shareUrl = `${window.location.origin}/study/quiz/${selectedQuiz}`;
+        // Share link points to quiz mode
+        const shareUrl = `${window.location.origin}/study/practice?quizId=${selectedQuiz}&mode=quiz`;
 
         try {
             if (navigator.share) {
                 await navigator.share({
-                    title: quiz.title,
-                    text: `Check out this quiz: ${quiz.title}`,
+                    title: listQuiz.title,
+                    text: `Take this quiz: ${listQuiz.title}`,
                     url: shareUrl,
                 });
             } else {
-                await navigator.clipboard.writeText(shareUrl);
-                alert("Share link copied to clipboard!");
+                // Fallback: copy to clipboard
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(shareUrl);
+                } else {
+                    const textarea = document.createElement("textarea");
+                    textarea.value = shareUrl;
+                    textarea.style.position = "fixed";
+                    textarea.style.left = "-9999px";
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    document.execCommand("copy");
+                    document.body.removeChild(textarea);
+                }
+                alert("Quiz link copied to clipboard!");
             }
         } catch (error) {
             if ((error as Error).name !== "AbortError") {
                 console.error("Share failed:", error);
-                // Fallback to copying the link
-                try {
-                    await navigator.clipboard.writeText(shareUrl);
-                    alert("Link copied to clipboard!");
-                } catch {
-                    alert("Failed to share");
-                }
+                alert("Failed to share quiz");
             }
         }
         setShowOptionsModal(false);
@@ -164,6 +186,8 @@ export default function MyQuestionsPage() {
         }
 
         setIsGeneratingPDF(true);
+        setShowOptionsModal(false);
+
         try {
             // Create printable HTML content
             const printContent = `
@@ -205,24 +229,37 @@ export default function MyQuestionsPage() {
                 </html>
             `;
 
-            // Open print dialog
-            const printWindow = window.open("", "_blank");
-            if (printWindow) {
-                printWindow.document.write(printContent);
-                printWindow.document.close();
-                printWindow.focus();
+            // Use hidden iframe instead of popup
+            const iframe = document.createElement("iframe");
+            iframe.style.position = "fixed";
+            iframe.style.right = "0";
+            iframe.style.bottom = "0";
+            iframe.style.width = "0";
+            iframe.style.height = "0";
+            iframe.style.border = "none";
+            document.body.appendChild(iframe);
+
+            const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+            if (iframeDoc) {
+                iframeDoc.open();
+                iframeDoc.write(printContent);
+                iframeDoc.close();
+
+                // Wait for content to load then print
                 setTimeout(() => {
-                    printWindow.print();
-                }, 500);
-            } else {
-                alert("Please allow popups to save as PDF");
+                    iframe.contentWindow?.focus();
+                    iframe.contentWindow?.print();
+                    // Remove iframe after printing
+                    setTimeout(() => {
+                        document.body.removeChild(iframe);
+                    }, 1000);
+                }, 300);
             }
         } catch (error) {
             console.error("PDF generation failed:", error);
             alert("Failed to generate PDF");
         } finally {
             setIsGeneratingPDF(false);
-            setShowOptionsModal(false);
         }
     };
 
