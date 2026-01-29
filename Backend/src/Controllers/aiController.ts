@@ -4,8 +4,9 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { RateLimit } from "../Models/RateLimit";
 import { User } from "../Models/User";
 import config from "../config";
-// pdf-parse v2 exports PDFParse class
-const { PDFParse } = require("pdf-parse");
+// pdf-parse exports a function that takes a buffer
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse = require("pdf-parse");
 import mammoth from "mammoth";
 
 // Rate limit configuration
@@ -25,12 +26,9 @@ async function extractTextFromDocument(base64Data: string, mimeType: string): Pr
 
     try {
         if (mimeType === 'application/pdf') {
-            // PDF extraction using PDFParse v2 class
-            // v2 requires { data: Uint8Array } in constructor
-            const uint8Array = new Uint8Array(buffer);
-            const parser = new PDFParse({ data: uint8Array });
-            const result = await parser.getText();
-            return result?.text || '';
+            // PDF extraction using pdf-parse function
+            const pdfData = await pdfParse(buffer);
+            return pdfData?.text || '';
         } else if (mimeType === 'application/msword' ||
             mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             // Word document extraction
@@ -184,7 +182,7 @@ export const generateQuestions = async (req: Request, res: Response) => {
 
         const numQuestions = Math.min(
             Math.max(parseInt(numberOfQuestions) || 10, 1),
-            50
+            20
         );
         const isMultipleChoice = questionType === "mcq";
 
