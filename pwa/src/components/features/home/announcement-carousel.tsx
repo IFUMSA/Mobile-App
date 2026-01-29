@@ -94,7 +94,8 @@ export function AnnouncementCarousel() {
     const handlePayNow = async () => {
         setIsCreatingPayment(true);
         try {
-            router.push("/payment/method");
+            // Navigate to payment method with annual-dues type
+            router.push("/payment/method?type=annual-dues");
         } finally {
             setIsCreatingPayment(false);
         }

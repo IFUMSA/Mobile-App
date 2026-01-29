@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Text } from "@/components/ui/text";
 import { Container } from "@/components/ui/container";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { useCreatePaymentMutation } from "@/hooks/use-payment";
-import { Briefcase } from "lucide-react";
+import { useCreatePaymentMutation, useAnnualDuesMutation } from "@/hooks/use-payment";
+import { Briefcase, Loader2 } from "lucide-react";
 
 interface PaymentMethodOption {
     id: "card" | "bank";
@@ -25,16 +25,26 @@ const paymentMethods: PaymentMethodOption[] = [
     },
 ];
 
-export default function PaymentMethodPage() {
+function PaymentMethodContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const paymentType = searchParams.get("type"); // "annual-dues" or null (cart checkout)
+
     const [selectedMethod, setSelectedMethod] = useState<"card" | "bank">("bank");
     const createPayment = useCreatePaymentMutation();
+    const createAnnualDues = useAnnualDuesMutation();
     const [error, setError] = useState<string | null>(null);
+
+    const isAnnualDues = paymentType === "annual-dues";
 
     const handleContinue = async () => {
         setError(null);
         try {
-            const result = await createPayment.mutateAsync(selectedMethod);
+            // Call the appropriate endpoint based on payment type
+            const result = isAnnualDues
+                ? await createAnnualDues.mutateAsync(selectedMethod)
+                : await createPayment.mutateAsync(selectedMethod);
+
             if (result.payment) {
                 const params = new URLSearchParams({
                     paymentId: result.payment.id,
@@ -53,6 +63,8 @@ export default function PaymentMethodPage() {
             setError(e.message || "Failed to create payment. Please try again.");
         }
     };
+
+    const isPending = createPayment.isPending || createAnnualDues.isPending;
 
     return (
         <Container className="min-h-screen flex flex-col">
@@ -77,8 +89,8 @@ export default function PaymentMethodPage() {
                             <button
                                 key={method.id}
                                 className={`flex items-center justify-between p-4 rounded-xl border-[1.5px] text-left cursor-pointer transition-colors ${isSelected
-                                        ? "border-[#2A996B] bg-[#2A996B]/5"
-                                        : "border-[#D9D9D9] bg-white"
+                                    ? "border-[#2A996B] bg-[#2A996B]/5"
+                                    : "border-[#D9D9D9] bg-white"
                                     }`}
                                 onClick={() => setSelectedMethod(method.id)}
                             >
@@ -119,11 +131,23 @@ export default function PaymentMethodPage() {
                     variant="secondary"
                     fullWidth
                     onClick={handleContinue}
-                    loading={createPayment.isPending}
+                    loading={isPending}
                 >
                     Continue
                 </Button>
             </div>
         </Container>
+    );
+}
+
+export default function PaymentMethodPage() {
+    return (
+        <Suspense fallback={
+            <Container className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-[#2A996B]" />
+            </Container>
+        }>
+            <PaymentMethodContent />
+        </Suspense>
     );
 }

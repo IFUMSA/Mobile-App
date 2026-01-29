@@ -18,6 +18,10 @@ const nextConfig = {
         protocol: "https" as const,
         hostname: "i.pinimg.com",
       },
+      {
+        protocol: "https" as const,
+        hostname: "res.cloudinary.com",
+      },
     ],
   },
 };
