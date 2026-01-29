@@ -79,16 +79,16 @@ export default function LandingScreen() {
     return () => clearTimeout(timer);
   }, [animateToNextScreen, currentScreen, isAnimating, isLoading, router]);
 
-  // If loading auth, show logo with pulse animation
+  // If loading auth, show same screen as first animation (Screen 0)
   if (isLoading) {
     return (
-      <div className="h-[100dvh] bg-[#1F382E] flex items-center justify-center">
-        <div className="animate-pulse">
+      <div className="h-[100dvh] bg-[#1F382E] fixed inset-0">
+        <div className="w-full h-full flex items-center justify-center px-6">
           <Image
             src="/images/ifumsa-logo.png"
-            alt="IFUMSA"
-            width={200}
-            height={133}
+            alt="IFUMSA Logo"
+            width={300}
+            height={200}
             className="object-contain"
             priority
           />

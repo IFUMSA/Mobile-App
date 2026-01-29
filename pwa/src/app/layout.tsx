@@ -20,6 +20,10 @@ const poppins = Poppins({
 export const metadata: Metadata = {
   title: "IFUMSA",
   description: "IFUMSA - Learn, Grow and Succeed Together",
+  icons: {
+    icon: "/images/ifumsa-logo.png",
+    apple: "/images/ifumsa-logo.png",
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
