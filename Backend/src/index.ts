@@ -54,9 +54,13 @@ app.use(cors({
     "http://localhost:3001",  // Alternative port
     "http://localhost:5173",  // Vite default
     "http://172.20.10.2:3000", // Network IP for mobile testing
-    process.env.ADMIN_URL || "http://localhost:3000",
-    process.env.PWA_URL || "http://localhost:3000" || "https://ifumsamobile.com" || "https://ifumsa.app",
-  ],
+    "https://ifumsa.app",     // Production PWA
+    "https://www.ifumsa.app", // Production PWA with www
+    "https://ifumsamobile.com", // Alternative production domain
+    "https://www.ifumsamobile.com", // Alternative with www
+    process.env.ADMIN_URL || "",
+    process.env.PWA_URL || "",
+  ].filter(Boolean), // Remove empty strings
   credentials: true,
 }));
 
