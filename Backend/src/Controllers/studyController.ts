@@ -234,7 +234,7 @@ export const getQuizByShareCode = async (req: Request, res: Response) => {
   }
 };
 
-// Enable quiz sharing (owner only) - always enables, never toggles off
+// Toggle quiz sharing (owner only)
 export const toggleQuizSharing = async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
@@ -252,9 +252,12 @@ export const toggleQuizSharing = async (req: Request, res: Response) => {
       return;
     }
 
-    // Always enable sharing (don't toggle off)
-    if (!quiz.isShared) {
-      // Generate share code if needed
+    // Toggle sharing
+    if (quiz.isShared) {
+      // Disable sharing
+      quiz.isShared = false;
+    } else {
+      // Enable sharing - generate code if needed
       if (!quiz.shareCode) {
         let code = generateShareCode();
         // Ensure uniqueness
@@ -265,18 +268,19 @@ export const toggleQuizSharing = async (req: Request, res: Response) => {
       }
       quiz.isShared = true;
       quiz.sharedAt = new Date();
-      await quiz.save();
     }
 
+    await quiz.save();
+
     res.status(200).json({
-      message: "Quiz is now shared",
-      isShared: true,
-      shareCode: quiz.shareCode,
-      shareLink: `ifumsa://quiz/${quiz.shareCode}`,
+      message: quiz.isShared ? "Quiz is now shared" : "Quiz is now private",
+      isShared: quiz.isShared,
+      shareCode: quiz.isShared ? quiz.shareCode : null,
+      shareLink: quiz.isShared ? `ifumsa://quiz/${quiz.shareCode}` : null,
     });
     return;
   } catch (error) {
-    console.error("Enable sharing error:", error);
+    console.error("Toggle sharing error:", error);
     res.status(500).json({ message: "Server error, try again" });
     return;
   }
