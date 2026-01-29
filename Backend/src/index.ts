@@ -57,7 +57,8 @@ app.use(cors({
     "https://ifumsa.app",     // Production PWA
     "https://www.ifumsa.app", // Production PWA with www
     "https://ifumsamobile.com", // Alternative production domain
-    "https://www.ifumsamobile.com", // Alternative with www
+    "https://www.ifumsamobile.com",
+    "https://ifumsaadmin.vercel.app", // Alternative with www
     process.env.ADMIN_URL || "",
     process.env.PWA_URL || "",
   ].filter(Boolean), // Remove empty strings
