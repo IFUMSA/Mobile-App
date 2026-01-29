@@ -73,14 +73,14 @@ export const studyService = {
         return response.data;
     },
 
-    // Toggle quiz sharing (enable/disable) - returns share code
+    // Enable quiz sharing - returns share code (uses enable=true to ensure sharing is only enabled, never disabled)
     toggleQuizSharing: async (id: string): Promise<{
         message: string;
         isShared: boolean;
         shareCode: string | null;
         shareLink: string | null;
     }> => {
-        const response = await api.post(`/api/study/quizzes/${id}/share`);
+        const response = await api.post(`/api/study/quizzes/${id}/share?enable=true`);
         return response.data;
     },
 

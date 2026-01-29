@@ -235,10 +235,12 @@ export const getQuizByShareCode = async (req: Request, res: Response) => {
 };
 
 // Toggle quiz sharing (owner only)
+// If ?enable=true is passed, it will only enable sharing (not toggle off)
 export const toggleQuizSharing = async (req: Request, res: Response) => {
   try {
     const userId = req.session.userId;
     const { id } = req.params;
+    const enableOnly = req.query.enable === 'true';
 
     if (!userId) {
       res.status(401).json({ message: "Unauthorized" });
@@ -252,8 +254,19 @@ export const toggleQuizSharing = async (req: Request, res: Response) => {
       return;
     }
 
-    // Toggle sharing
-    if (quiz.isShared) {
+    // If enable-only mode and already shared, just return the share code
+    if (enableOnly && quiz.isShared && quiz.shareCode) {
+      res.status(200).json({
+        message: "Quiz is already shared",
+        isShared: true,
+        shareCode: quiz.shareCode,
+        shareLink: `ifumsa://quiz/${quiz.shareCode}`,
+      });
+      return;
+    }
+
+    // Toggle sharing (or enable if enableOnly)
+    if (quiz.isShared && !enableOnly) {
       // Disable sharing
       quiz.isShared = false;
     } else {

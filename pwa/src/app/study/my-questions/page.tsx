@@ -33,8 +33,7 @@ export default function MyQuestionsPage() {
     const [showModeModal, setShowModeModal] = useState(false);
     const [selectedMode, setSelectedMode] = useState<string | null>(null);
     const [isCopied, setIsCopied] = useState(false);
-    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-    const [isLoadingQuiz, setIsLoadingQuiz] = useState(false);
+    const [loadingAction, setLoadingAction] = useState<'copy' | 'share' | 'pdf' | null>(null);
 
     const { data: quizzesData, isLoading, error, refetch } = useUserQuizzes();
     const deleteQuiz = useDeleteQuizMutation();
@@ -65,11 +64,11 @@ export default function MyQuestionsPage() {
         return quizzes.find(q => (q.id || q._id) === selectedQuiz) || null;
     };
 
-    // Fetch full quiz data with questions
+    // Fetch full quiz data with questions (for copy action)
     const fetchFullQuiz = async (): Promise<Quiz | null> => {
         if (!selectedQuiz) return null;
         try {
-            setIsLoadingQuiz(true);
+            setLoadingAction('copy');
             const { quiz } = await studyService.getUserQuizById(selectedQuiz);
             return {
                 id: quiz.id || quiz._id,
@@ -81,7 +80,7 @@ export default function MyQuestionsPage() {
             console.error("Failed to fetch quiz:", error);
             return null;
         } finally {
-            setIsLoadingQuiz(false);
+            setLoadingAction(null);
         }
     };
 
@@ -141,7 +140,7 @@ export default function MyQuestionsPage() {
             return;
         }
 
-        setIsLoadingQuiz(true);
+        setLoadingAction('share');
         try {
             // Enable sharing and get share code
             const shareResult = await studyService.toggleQuizSharing(selectedQuiz);
@@ -182,7 +181,7 @@ export default function MyQuestionsPage() {
                 alert("Failed to share quiz");
             }
         } finally {
-            setIsLoadingQuiz(false);
+            setLoadingAction(null);
             setShowOptionsModal(false);
         }
     };
@@ -195,7 +194,7 @@ export default function MyQuestionsPage() {
             return;
         }
 
-        setIsGeneratingPDF(true);
+        setLoadingAction('pdf');
         setShowOptionsModal(false);
 
         try {
@@ -269,7 +268,7 @@ export default function MyQuestionsPage() {
             console.error("PDF generation failed:", error);
             alert("Failed to generate PDF");
         } finally {
-            setIsGeneratingPDF(false);
+            setLoadingAction(null);
         }
     };
 
@@ -382,47 +381,47 @@ export default function MyQuestionsPage() {
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleSavePDF}
-                                disabled={isGeneratingPDF || isLoadingQuiz}
+                                disabled={loadingAction !== null}
                             >
-                                {isGeneratingPDF ? (
+                                {loadingAction === 'pdf' ? (
                                     <Loader2 size={20} className="animate-spin text-[#1F382E]" />
                                 ) : (
                                     <Download size={20} className="text-[#1F382E]" />
                                 )}
                                 <Text variant="body2" className="ml-4">
-                                    {isGeneratingPDF ? "Generating..." : "Save as PDF"}
+                                    {loadingAction === 'pdf' ? "Generating..." : "Save as PDF"}
                                 </Text>
                             </button>
 
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleCopy}
-                                disabled={isLoadingQuiz}
+                                disabled={loadingAction !== null}
                             >
                                 {isCopied ? (
                                     <Check size={20} className="text-green-500" />
-                                ) : isLoadingQuiz ? (
+                                ) : loadingAction === 'copy' ? (
                                     <Loader2 size={20} className="animate-spin text-[#1F382E]" />
                                 ) : (
                                     <Copy size={20} className="text-[#1F382E]" />
                                 )}
                                 <Text variant="body2" className="ml-4">
-                                    {isCopied ? "Copied!" : isLoadingQuiz ? "Loading..." : "Copy Questions"}
+                                    {isCopied ? "Copied!" : loadingAction === 'copy' ? "Loading..." : "Copy Questions"}
                                 </Text>
                             </button>
 
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleShare}
-                                disabled={isLoadingQuiz}
+                                disabled={loadingAction !== null}
                             >
-                                {isLoadingQuiz ? (
+                                {loadingAction === 'share' ? (
                                     <Loader2 size={20} className="animate-spin text-[#1F382E]" />
                                 ) : (
                                     <Share2 size={20} className="text-[#1F382E]" />
                                 )}
                                 <Text variant="body2" className="ml-4">
-                                    {isLoadingQuiz ? "Sharing..." : "Share Link"}
+                                    {loadingAction === 'share' ? "Sharing..." : "Share Link"}
                                 </Text>
                             </button>
 
