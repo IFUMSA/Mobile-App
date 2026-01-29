@@ -382,9 +382,13 @@ export default function MyQuestionsPage() {
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleSavePDF}
-                                disabled={isGeneratingPDF}
+                                disabled={isGeneratingPDF || isLoadingQuiz}
                             >
-                                <Download size={20} className="text-[#1F382E]" />
+                                {isGeneratingPDF ? (
+                                    <Loader2 size={20} className="animate-spin text-[#1F382E]" />
+                                ) : (
+                                    <Download size={20} className="text-[#1F382E]" />
+                                )}
                                 <Text variant="body2" className="ml-4">
                                     {isGeneratingPDF ? "Generating..." : "Save as PDF"}
                                 </Text>
@@ -393,23 +397,33 @@ export default function MyQuestionsPage() {
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleCopy}
+                                disabled={isLoadingQuiz}
                             >
                                 {isCopied ? (
                                     <Check size={20} className="text-green-500" />
+                                ) : isLoadingQuiz ? (
+                                    <Loader2 size={20} className="animate-spin text-[#1F382E]" />
                                 ) : (
                                     <Copy size={20} className="text-[#1F382E]" />
                                 )}
                                 <Text variant="body2" className="ml-4">
-                                    {isCopied ? "Copied!" : "Copy Questions"}
+                                    {isCopied ? "Copied!" : isLoadingQuiz ? "Loading..." : "Copy Questions"}
                                 </Text>
                             </button>
 
                             <button
                                 className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer"
                                 onClick={handleShare}
+                                disabled={isLoadingQuiz}
                             >
-                                <Share2 size={20} className="text-[#1F382E]" />
-                                <Text variant="body2" className="ml-4">Share Link</Text>
+                                {isLoadingQuiz ? (
+                                    <Loader2 size={20} className="animate-spin text-[#1F382E]" />
+                                ) : (
+                                    <Share2 size={20} className="text-[#1F382E]" />
+                                )}
+                                <Text variant="body2" className="ml-4">
+                                    {isLoadingQuiz ? "Sharing..." : "Share Link"}
+                                </Text>
                             </button>
 
                             <button className="flex items-center w-full py-4 bg-transparent border-0 cursor-pointer" onClick={handleDelete}>
