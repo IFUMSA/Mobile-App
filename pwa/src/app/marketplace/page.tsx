@@ -3,11 +3,9 @@
 import React from "react";
 import Link from "next/link";
 import { Text } from "@/components/ui/text";
-import { Container } from "@/components/ui/container";
-import { PageHeader } from "@/components/ui/page-header";
 import { useProductCategories } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
-import { ShoppingBag, BookOpen, Loader2, ShoppingCart } from "lucide-react";
+import { ShoppingBag, Loader2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 
 // Map category values to display names and icons
@@ -64,82 +62,74 @@ export default function MarketplacePage() {
 		setMounted(true);
 	}, []);
 
-	const getCategoryDisplay = (category: string) => {
-		const config =
-			categoryConfig.find((c) => c.key === category) || {
-				key: category,
-				title: category,
-				icon: (
-					<Image
-						src="/images/synopsis.png"
-						alt="synopsis"
-						width={150}
-						height={100}
-						className="rounded-xl"
-					/>
-				),
-			};
-		return config;
-	};
-
 	// Prevent hydration mismatch by not rendering until client is mounted
 	if (!mounted || isLoading) {
 		return (
-			<Container className="min-h-screen">
-				<PageHeader title="Marketplace" />
-				<div className="flex-1 flex items-center justify-center">
-					<Loader2 className="h-8 w-8 animate-spin text-[#2A996B]" />
-				</div>
-			</Container>
+			<div className="min-h-screen flex items-center justify-center bg-white">
+				<Loader2 className="h-8 w-8 animate-spin text-[#2A996B]" />
+			</div>
 		);
 	}
 
 	return (
-		<>
-			<div className="relative w-full h-screen/2 bg-linear-to-b from-gray-100 to-white overflow-hidden">
+		<div className="min-h-screen flex flex-col bg-white">
+			{/* Full-screen Hero Image - takes ~50% of screen height */}
+			<div className="relative w-full h-[50vh] min-h-[300px]">
 				<Image
 					src="/images/marketplace-banner.png"
 					alt="marketplace banner"
-					width={400}
-					height={200}
-					className="object-contain"
+					fill
+					className="object-cover"
 					priority
 				/>
-				{/* Cart Icon */}
+
+				{/* Cart Icon - positioned top right */}
 				<Link
 					href="/cart"
-					className="absolute top-6 right-6 bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow"
+					className="absolute top-6 right-6 bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow z-10"
 				>
 					<div className="relative">
 						<ShoppingCart size={24} className="text-[#2A996B]" />
 						{cartItemCount > 0 && (
-							<div className="absolute -top-2 -right-2 bg-[#2A996B] text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+							<div className="absolute -top-2 -right-2 bg-[#2A996B] text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
 								{cartItemCount}
 							</div>
 						)}
 					</div>
 				</Link>
-				<div className="absolute bottom-8 left-0 right-0 px-6">
-					<p className="text-white font-bold text-center text-lg">
-						One-Stop Shop for You :<br />
+
+				{/* Gradient overlay for text readability */}
+				<div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+
+				{/* Hero text at bottom of image */}
+				<div className="absolute bottom-8 left-0 right-0 px-6 text-center">
+					<p className="text-white font-bold text-xl drop-shadow-lg">
+						One-Stop Shop for You:
+					</p>
+					<p className="text-white/90 text-lg drop-shadow-md mt-1">
 						Essentials, Merch and More
 					</p>
 				</div>
 			</div>
-			<Container className="h-screen/2 mt-0 pt-6">
-				{/* <PageHeader title="Marketplace" /> */}
 
+			{/* Categories Section */}
+			<div className="flex-1 px-6 py-8">
 				{categories.length === 0 ? (
-					<div className="flex-1 flex flex-col items-center justify-center py-15">
+					<div className="flex-1 flex flex-col items-center justify-center py-16">
 						<ShoppingBag size={48} className="text-[#C1C1C1]" />
 						<Text variant="body" color="gray" className="mt-3">
 							No products available yet
 						</Text>
 					</div>
 				) : (
-					<div className="flex justify-center gap-1 py-0">
-						{categoryConfig.map((config) => {
-							return (
+					<>
+						<Text variant="body" className="text-center text-gray-500 mb-6">
+							Browse Categories
+						</Text>
+
+						{/* Centered 3-column grid */}
+						<div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
+							{categoryConfig.map((config) => (
 								<Link
 									key={config.key}
 									href={`/marketplace/${config.key.toLowerCase()}`}
@@ -157,11 +147,11 @@ export default function MarketplacePage() {
 										{config.title}
 									</Text>
 								</Link>
-							);
-						})}
-					</div>
+							))}
+						</div>
+					</>
 				)}
-			</Container>
-		</>
+			</div>
+		</div>
 	);
 }

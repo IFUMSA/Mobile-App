@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { PageHeader } from "@/components/ui/page-header";
+import { authService } from "@/services/auth";
 
 function VerifyOTPContent() {
     const router = useRouter();
@@ -39,8 +40,10 @@ function VerifyOTPContent() {
         setIsLoading(true);
         setError(null);
         try {
-            // TODO: Call verify OTP API
-            router.push(`/reset-password?email=${encodeURIComponent(email)}&code=${code}`);
+            // Call verify OTP API to validate code and get reset token
+            const response = await authService.verifyOtp(email, code);
+            // Pass the reset token (not the OTP code) to the reset password page
+            router.push(`/reset-password?code=${encodeURIComponent(response.resetToken)}`);
         } catch (err: unknown) {
             const e = err as { message?: string };
             setError(e.message || "Invalid code. Please try again.");

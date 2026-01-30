@@ -53,15 +53,18 @@ export default function ProfileEditPage() {
             return;
         }
 
+        const updateData = {
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+            studentClass: studentClass.trim(),
+            matricNumber: matricNumber.trim(),
+            phone: phone.trim(),
+            profilePic: profilePic || undefined,
+        };
+        console.log("=== SENDING PROFILE UPDATE ===", updateData);
+
         try {
-            await updateProfile.mutateAsync({
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                studentClass: studentClass.trim(),
-                matricNumber: matricNumber.trim(),
-                phone: phone.trim(),
-                profilePic: profilePic || undefined,
-            });
+            await updateProfile.mutateAsync(updateData);
             await refreshUser();
             router.back();
         } catch (error) {

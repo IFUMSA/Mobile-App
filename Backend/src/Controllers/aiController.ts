@@ -4,9 +4,8 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { RateLimit } from "../Models/RateLimit";
 import { User } from "../Models/User";
 import config from "../config";
-// pdf-parse exports a function that takes a buffer
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require("pdf-parse");
+// pdf-parse v2 for PDF text extraction
+import { PDFParse } from "pdf-parse";
 import mammoth from "mammoth";
 
 // Rate limit configuration
@@ -26,9 +25,11 @@ async function extractTextFromDocument(base64Data: string, mimeType: string): Pr
 
     try {
         if (mimeType === 'application/pdf') {
-            // PDF extraction using pdf-parse function
-            const pdfData = await pdfParse(buffer);
-            return pdfData?.text || '';
+            // PDF extraction using pdf-parse v2
+            const parser = new PDFParse({ data: buffer });
+            const result = await parser.getText();
+            await parser.destroy();
+            return result?.text || '';
         } else if (mimeType === 'application/msword' ||
             mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
             // Word document extraction
@@ -254,17 +255,8 @@ Generate exactly ${numQuestions} questions now:`;
                                 image: part.url,
                             });
                             console.log("Added image part:", part.mediaType);
-                        } else if (part.mediaType === 'application/pdf' && base64Data) {
-                            // PDFs use 'file' type - SDK automatically converts to Anthropic's document type
-                            // and adds the pdfs-2024-09-25 beta flag for full PDF vision support
-                            messageContent.push({
-                                type: 'file',
-                                data: base64Data,
-                                mimeType: 'application/pdf',
-                            });
-                            console.log("Added PDF file part for native processing");
                         } else if (base64Data) {
-                            // Word docs and text files - extract text manually
+                            // All documents (PDF, Word, text) - extract text
                             console.log("Extracting text from:", part.mediaType);
                             const text = await extractTextFromDocument(base64Data, part.mediaType);
                             if (text) {
@@ -292,6 +284,18 @@ Generate exactly ${numQuestions} questions now:`;
             text: finalPrompt,
         });
 
+        // Filter out any invalid entries and ensure all parts have required fields
+        const validMessageContent = messageContent.filter((part) => {
+            if (!part || typeof part !== 'object') return false;
+            if (part.type === 'text' && typeof part.text === 'string') return true;
+            if (part.type === 'image' && part.image) return true;
+            if (part.type === 'file' && part.data && part.mimeType) return true;
+            console.log('Filtering out invalid message part:', part);
+            return false;
+        });
+
+        console.log("Valid message content parts:", validMessageContent.length);
+
         // Call AI via Anthropic with multimodal content
         const result = await generateText({
             model: anthropic('claude-haiku-4-5'),
@@ -309,7 +313,7 @@ CRITICAL: Always respond with valid JSON only. Never use markdown code blocks. N
             messages: [
                 {
                     role: 'user',
-                    content: messageContent,
+                    content: validMessageContent,
                 },
             ],
         });

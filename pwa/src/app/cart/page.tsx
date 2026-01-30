@@ -52,9 +52,9 @@ export default function CartPage() {
                     <Text variant="body" color="gray" className="mt-3 mb-6">
                         Your cart is empty
                     </Text>
-                    <Link href="/synopses">
+                    <Link href="/marketplace">
                         <Button variant="secondary" className="px-8">
-                            Browse Synopses
+                            Browse Marketplace
                         </Button>
                     </Link>
                 </div>
