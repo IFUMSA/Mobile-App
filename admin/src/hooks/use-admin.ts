@@ -43,8 +43,10 @@ export const useAddAdminMutation = () => {
       );
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    onSuccess: async () => {
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ["admins"] });
+      await queryClient.refetchQueries({ queryKey: ["admins"] });
     },
   });
 };
@@ -63,8 +65,10 @@ export const useRemoveAdminMutation = () => {
       );
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admins"] });
+    onSuccess: async () => {
+      // Invalidate and refetch immediately
+      await queryClient.invalidateQueries({ queryKey: ["admins"] });
+      await queryClient.refetchQueries({ queryKey: ["admins"] });
     },
   });
 };

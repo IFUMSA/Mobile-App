@@ -71,7 +71,7 @@ export const adminLogout = async (req: Request, res: Response) => {
     }
 };
 
-// Admin login - uses regular credentials, checks if email is in admin list
+// Admin login - hybrid approach: checks database role OR env variable
 export const adminLogin = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
@@ -81,18 +81,24 @@ export const adminLogin = async (req: Request, res: Response) => {
             return;
         }
 
-        const adminEmails = getAdminEmails();
-        if (!adminEmails.includes(email.toLowerCase())) {
-            res.status(403).json({ message: "Not authorized as admin" });
-            return;
-        }
-
+        // Find user in database
         const user = await User.findOne({ email: email.toLowerCase() });
         if (!user) {
             res.status(401).json({ message: "Invalid credentials" });
             return;
         }
 
+        // Hybrid admin check: database role OR env variable
+        const adminEmails = getAdminEmails();
+        const isAdminInDb = user.role === "admin";
+        const isAdminInEnv = adminEmails.includes(email.toLowerCase());
+
+        if (!isAdminInDb && !isAdminInEnv) {
+            res.status(403).json({ message: "Not authorized as admin" });
+            return;
+        }
+
+        // Verify password
         const isMatch = await bcrypt.compare(password, user.password as string);
         if (!isMatch) {
             res.status(401).json({ message: "Invalid credentials" });
@@ -209,7 +215,7 @@ export const updateOrderStatus = async (req: Request, res: Response) => {
         if (status === "confirmed") {
             updateData.verifiedAt = new Date();
             updateData.verifiedBy = req.session.userId;
-            
+
             // Generate unique receipt code
             let receiptCode = generateReceiptCode();
             let attempts = 0;
@@ -513,7 +519,7 @@ export const createEvent = async (req: Request, res: Response) => {
         return;
     } catch (error: any) {
         console.error("Create event error:", error);
-        
+
         // Handle validation errors
         if (error.name === "ValidationError") {
             const messages = Object.values(error.errors)
