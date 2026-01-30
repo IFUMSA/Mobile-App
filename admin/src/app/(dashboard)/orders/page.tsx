@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/table";
 import { Eye, Check, X } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 interface Order {
     _id: string;
@@ -42,11 +43,7 @@ export default function OrdersPage() {
 
     const fetchOrders = async () => {
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/admin/orders`,
-                { credentials: "include" }
-            );
-            const data = await res.json();
+            const data = await api.getOrders();
             setOrders(data.orders || []);
         } catch (error) {
             console.error("Failed to fetch orders:", error);

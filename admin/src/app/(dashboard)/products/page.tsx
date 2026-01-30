@@ -14,6 +14,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
+import { api } from "@/lib/api";
 
 interface Product {
     _id: string;
@@ -34,11 +35,7 @@ export default function ProductsPage() {
 
     const fetchProducts = async () => {
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/products`,
-                { credentials: "include" }
-            );
-            const data = await res.json();
+            const data = await api.getProducts();
             setProducts(data.products || []);
         } catch (error) {
             console.error("Failed to fetch products:", error);
@@ -58,10 +55,7 @@ export default function ProductsPage() {
         if (!confirm("Are you sure you want to delete this product?")) return;
 
         try {
-            await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/admin/products/${id}`,
-                { method: "DELETE", credentials: "include" }
-            );
+            await api.deleteProduct(id);
             setProducts(products.filter((p) => p._id !== id));
         } catch (error) {
             console.error("Failed to delete product:", error);

@@ -31,12 +31,12 @@ function VerifyMailContent() {
     };
 
     return (
-        <Container className="min-h-screen flex flex-col">
+        <Container className="min-h-screen bg-white flex flex-col">
             <div className="flex-1 flex flex-col items-center justify-center px-6">
                 <Mail size={140} className="text-[#2A996B] mb-6" />
 
                 <Text variant="heading" className="mb-4 text-center">
-                    Check your email
+                    Check your inbox or spam folder
                 </Text>
 
                 <Text variant="body" className="text-center mb-2">

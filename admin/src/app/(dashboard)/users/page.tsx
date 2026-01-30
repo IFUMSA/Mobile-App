@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { api } from "@/lib/api";
 
 interface User {
     _id: string;
@@ -19,7 +20,7 @@ interface User {
     lastName: string;
     email: string;
     userName: string;
-    profilePic: string;
+    profilePic?: string;
     isVerified: boolean;
     createdAt: string;
 }
@@ -34,11 +35,7 @@ export default function UsersPage() {
 
     const fetchUsers = async () => {
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/admin/users`,
-                { credentials: "include" }
-            );
-            const data = await res.json();
+            const data = await api.getUsers();
             setUsers(data.users || []);
         } catch (error) {
             console.error("Failed to fetch users:", error);

@@ -38,11 +38,7 @@ export default function EditProductPage() {
 
     const fetchProduct = async (id: string) => {
         try {
-            const res = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/api/products/${id}`,
-                { credentials: "include" }
-            );
-            const data = await res.json();
+            const data = await api.getProduct(id);
             const product = data.product;
             setFormData({
                 title: product.title || "",

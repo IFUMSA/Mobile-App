@@ -1,3 +1,6 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import { Text } from "@/components/ui/text";
 
 export default function AuthLayout({
@@ -5,6 +8,15 @@ export default function AuthLayout({
 }: {
     children: React.ReactNode;
 }) {
+    const pathname = usePathname();
+
+    // Only show auth layout wrapper for login and signup
+    const showLayout = pathname === "/login" || pathname === "/signup";
+
+    if (!showLayout) {
+        return <>{children}</>;
+    }
+
     return (
         <div className="min-h-screen bg-[#1F382E]">
             {/* Green Header */}
