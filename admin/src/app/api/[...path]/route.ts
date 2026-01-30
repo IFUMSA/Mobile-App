@@ -4,24 +4,20 @@ import { NextRequest, NextResponse } from "next/server";
 const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 /**
- * Catch-all proxy for admin API routes
- * Forwards requests to backend with session cookie
+ * Universal API proxy - forwards ALL /api/* requests to backend with session cookies
+ * Handles authentication by forwarding admin_session and backend_session cookies
  */
 async function handleRequest(request: NextRequest, params: { path: string[] }) {
     try {
         const cookieStore = await cookies();
-        const sessionCookie = cookieStore.get("admin_session");
         const backendSession = cookieStore.get("backend_session");
 
-        if (!sessionCookie?.value) {
-            return NextResponse.json(
-                { message: "Not authenticated" },
-                { status: 401 }
-            );
-        }
-
         const path = params.path.join("/");
-        const url = `${BACKEND_URL}/api/admin/${path}`;
+        const url = `${BACKEND_URL}/api/${path}`;
+
+        // Get search params from original request
+        const searchParams = request.nextUrl.searchParams.toString();
+        const fullUrl = searchParams ? `${url}?${searchParams}` : url;
 
         const body = request.method !== "GET" && request.method !== "HEAD"
             ? await request.text()
@@ -36,18 +32,24 @@ async function handleRequest(request: NextRequest, params: { path: string[] }) {
             headers["Cookie"] = `connect.sid=${backendSession.value}`;
         }
 
-        const res = await fetch(url, {
+        const res = await fetch(fullUrl, {
             method: request.method,
             headers,
             body,
         });
 
         const data = await res.json().catch(() => ({}));
-        return NextResponse.json(data, { status: res.status });
+
+        return NextResponse.json(data, {
+            status: res.status,
+            headers: {
+                "Set-Cookie": res.headers.get("set-cookie") || "",
+            },
+        });
     } catch (error) {
-        console.error("Admin proxy error:", error);
+        console.error("API proxy error:", error);
         return NextResponse.json(
-            { message: "Request failed" },
+            { message: "Request failed", error: String(error) },
             { status: 500 }
         );
     }
@@ -68,8 +70,12 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ pat
     return handleRequest(request, params);
 }
 
-export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
     const params = await context.params;
     return handleRequest(request, params);
 }
 
+export async function DELETE(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+    const params = await context.params;
+    return handleRequest(request, params);
+}
