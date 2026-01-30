@@ -5,8 +5,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { CheckCircle, XCircle, AlertCircle, MessageSquare } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
 interface Payment {
   _id: string;
   id?: string;
@@ -34,7 +32,7 @@ export function PaymentApproval({ payment, onApprovalSuccess }: PaymentApprovalP
   const updatePaymentMutation = useMutation({
     mutationFn: async (status: "confirmed" | "rejected") => {
       const response = await axios.post(
-        `${API_BASE}/api/payment/update-status`,
+        `/api/payment/update-status`,
         {
           reference: payment.reference,
           status,

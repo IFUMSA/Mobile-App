@@ -12,8 +12,6 @@ interface ImageUploadProps {
     className?: string;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
 export function ImageUpload({
     value,
     onChange,
@@ -48,8 +46,8 @@ export function ImageUpload({
                 // Convert to base64
                 const base64 = await fileToBase64(file);
 
-                // Upload to backend
-                const res = await fetch(`${API_URL}/api/upload/image`, {
+                // Upload to backend via local proxy
+                const res = await fetch(`/api/upload/image`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     credentials: "include",

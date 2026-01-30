@@ -3,8 +3,6 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from "react";
 import axios from "axios";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-
 interface Notification {
   _id: string;
   type: "event" | "payment" | "payment_approval" | "reminder";
@@ -45,7 +43,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       setIsLoading(true);
       setError(null);
 
-      const response = await axios.get(`${API_BASE}/api/notifications`, {
+      const response = await axios.get(`/api/notifications`, {
         withCredentials: true,
       });
 
@@ -62,7 +60,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
       await axios.put(
-        `${API_BASE}/api/notifications/${notificationId}/read`,
+        `/api/notifications/${notificationId}/read`,
         {},
         { withCredentials: true }
       );
@@ -81,7 +79,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const markAllAsRead = useCallback(async () => {
     try {
       await axios.put(
-        `${API_BASE}/api/notifications/read-all`,
+        `/api/notifications/read-all`,
         {},
         { withCredentials: true }
       );
@@ -95,7 +93,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const deleteNotification = useCallback(async (notificationId: string) => {
     try {
-      await axios.delete(`${API_BASE}/api/notifications/${notificationId}`, {
+      await axios.delete(`/api/notifications/${notificationId}`, {
         withCredentials: true,
       });
 
@@ -104,7 +102,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       );
       setUnreadCount((prev) =>
         prev > 0 &&
-        notifications.find((n) => n._id === notificationId && !n.isRead)
+          notifications.find((n) => n._id === notificationId && !n.isRead)
           ? prev - 1
           : prev
       );
