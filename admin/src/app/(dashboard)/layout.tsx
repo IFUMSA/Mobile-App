@@ -25,6 +25,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
     SidebarProvider,
+    SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/auth-context";
@@ -108,10 +109,13 @@ export default function DashboardLayout({
                 <AdminSidebar />
                 <main className="flex-1 bg-zinc-50 dark:bg-zinc-950">
                     {/* Header with Notifications */}
-                    <div className="p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900">
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
-                        <div className="flex items-center gap-4">
-                            <Link href="/notifications" className="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <div className="p-4 md:p-6 border-b border-zinc-200 dark:border-zinc-800 flex justify-between items-center bg-white dark:bg-zinc-900">
+                        <div className="flex items-center gap-3">
+                            <SidebarTrigger className="md:hidden" />
+                            <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+                        </div>
+                        <div className="flex items-center gap-2 md:gap-4">
+                            <Link href="/notifications" className="text-blue-600 hover:text-blue-700 text-sm font-medium hidden md:block">
                                 View All
                             </Link>
                             <NotificationBell />

@@ -1,10 +1,21 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
+// Helper to determine if endpoint should use local proxy (for admin routes)
+function getApiUrl(endpoint: string): string {
+    // Admin routes go through local proxy to handle cookies properly
+    if (endpoint.startsWith("/api/admin/")) {
+        return endpoint; // Use local Next.js proxy
+    }
+    // Non-admin routes (like /api/products) go directly to backend
+    return `${API_URL}${endpoint}`;
+}
+
 export async function fetchAPI<T>(
     endpoint: string,
     options: RequestInit = {}
 ): Promise<T> {
-    const res = await fetch(`${API_URL}${endpoint}`, {
+    const url = getApiUrl(endpoint);
+    const res = await fetch(url, {
         ...options,
         credentials: "include",
         headers: {
