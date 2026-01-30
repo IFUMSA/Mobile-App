@@ -254,8 +254,17 @@ Generate exactly ${numQuestions} questions now:`;
                                 image: part.url,
                             });
                             console.log("Added image part:", part.mediaType);
+                        } else if (part.mediaType === 'application/pdf' && base64Data) {
+                            // PDFs use 'file' type - SDK automatically converts to Anthropic's document type
+                            // and adds the pdfs-2024-09-25 beta flag for full PDF vision support
+                            messageContent.push({
+                                type: 'file',
+                                data: base64Data,
+                                mimeType: 'application/pdf',
+                            });
+                            console.log("Added PDF file part for native processing");
                         } else if (base64Data) {
-                            // Extract text from PDFs, Word docs, and text files
+                            // Word docs and text files - extract text manually
                             console.log("Extracting text from:", part.mediaType);
                             const text = await extractTextFromDocument(base64Data, part.mediaType);
                             if (text) {

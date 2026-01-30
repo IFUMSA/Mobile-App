@@ -8,8 +8,8 @@ export function middleware(request: NextRequest) {
     const publicRoutes = ["/login"];
     const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
-    // Check for admin session cookie (set by backend)
-    const sessionCookie = request.cookies.get("connect.sid");
+    // Check for admin session cookie (set by Vercel API route)
+    const sessionCookie = request.cookies.get("admin_session");
 
     // If no session and trying to access protected route, redirect to login
     if (!sessionCookie && !isPublicRoute) {
