@@ -5,8 +5,10 @@ import { cn } from "@/lib/utils";
 import { Text } from "./text";
 import { useAuth } from "@/context/auth-context";
 import { useRouter } from "next/navigation";
-import { User, ShoppingCart, CreditCard, LogOut } from "lucide-react";
+import { User, ShoppingCart, CreditCard, LogOut, Bell, ShoppingBag } from "lucide-react";
 import Image from "next/image";
+import { useCart } from "@/hooks/use-cart";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const SIDEBAR_WIDTH = "50%";
 
@@ -23,6 +25,18 @@ const navigationItems: NavItem[] = [
         label: "Profile",
         icon: <User size={20} />,
         route: "/profile",
+    },
+    {
+        id: "marketplace",
+        label: "Marketplace",
+        icon: <ShoppingBag size={20} />,
+        route: "/marketplace",
+    },
+    {
+        id: "notifications",
+        label: "Notifications",
+        icon: <Bell size={20} />,
+        route: "/notifications",
     },
     {
         id: "cart",
@@ -46,6 +60,13 @@ interface SidebarProps {
 export function Sidebar({ visible, onClose }: SidebarProps) {
     const router = useRouter();
     const { user, logout } = useAuth();
+    const { data: cartData } = useCart();
+    const { data: notificationData } = useNotifications();
+
+    // Calculate badge counts
+    const cartItemCount = cartData?.cart?.items?.length || 0;
+    const unreadCount = notificationData?.unreadCount || 0;
+
     const [isAnimating, setIsAnimating] = useState(false);
     const [shouldRender, setShouldRender] = useState(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
@@ -153,13 +174,27 @@ export function Sidebar({ visible, onClose }: SidebarProps) {
                     {navigationItems.map((item) => (
                         <button
                             key={item.id}
-                            className="flex items-center w-full mb-3 p-0 bg-transparent border-0 cursor-pointer hover:opacity-70 transition-opacity"
+                            className="flex items-center w-full mb-3 p-0 bg-transparent border-0 cursor-pointer hover:opacity-70 transition-opacity relative"
                             onClick={() => handleNavigation(item.route)}
                         >
-                            <div className="mr-3 w-6 h-6 flex items-center justify-center text-[#1F382E]">
+                            <div className="mr-3 w-6 h-6 flex items-center justify-center text-[#1F382E] relative">
                                 {item.icon}
+
+                                {/* Badge for Notifications */}
+                                {item.id === "notifications" && unreadCount > 0 && (
+                                    <div className="absolute -top-1 -right-1 bg-[#F84F4F] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                                        {unreadCount > 9 ? "9+" : unreadCount}
+                                    </div>
+                                )}
+
+                                {/* Badge for Cart */}
+                                {item.id === "cart" && cartItemCount > 0 && (
+                                    <div className="absolute -top-1 -right-1 bg-[#F84F4F] text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center border-2 border-white">
+                                        {cartItemCount > 9 ? "9+" : cartItemCount}
+                                    </div>
+                                )}
                             </div>
-                            <Text variant="caption">{item.label}</Text>
+                            <Text variant="caption" as="span">{item.label}</Text>
                         </button>
                     ))}
                 </div>
@@ -173,7 +208,7 @@ export function Sidebar({ visible, onClose }: SidebarProps) {
                     <div className="mr-3 w-6 h-6 flex items-center justify-center text-[#F84F4F]">
                         <LogOut size={20} />
                     </div>
-                    <Text variant="caption" color="error">
+                    <Text variant="caption" color="error" as="span">
                         {isLoggingOut ? "Logging out..." : "Logout"}
                     </Text>
                 </button>

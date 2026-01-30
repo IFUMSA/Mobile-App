@@ -19,6 +19,7 @@ import aiRouter from "./Routes/ai";
 import adminRouter from "./Routes/admin";
 import contentRouter from "./Routes/content";
 import uploadRouter from "./Routes/upload";
+import notificationRouter from "./Routes/notification";
 
 //Initialize Express
 const app: Express = express();
@@ -93,6 +94,7 @@ app.use("/api/ai", aiRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/content", contentRouter);
 app.use("/api/upload", uploadRouter);
+app.use("/api/notifications", notificationRouter);
 
 const server = app.listen(port, "0.0.0.0", () => {
   console.log(`⚡️[server]: Server is running at http://0.0.0.0:${port}`);

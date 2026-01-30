@@ -21,6 +21,9 @@ import {
     createEvent,
     updateEvent,
     deleteEvent,
+    addNewAdmin,
+    getAllAdmins,
+    removeAdmin,
 } from "../Controllers/adminController";
 
 const adminRouter: Router = express.Router();
@@ -52,5 +55,10 @@ adminRouter.get("/events", requireAdmin, getAllEvents);
 adminRouter.post("/events", requireAdmin, createEvent);
 adminRouter.put("/events/:id", requireAdmin, updateEvent);
 adminRouter.delete("/events/:id", requireAdmin, deleteEvent);
+
+// Admin Management
+adminRouter.get("/manage/all", requireAdmin, getAllAdmins);
+adminRouter.post("/manage/add", requireAdmin, addNewAdmin);
+adminRouter.post("/manage/remove", requireAdmin, removeAdmin);
 
 export = adminRouter;
