@@ -5,6 +5,7 @@ import { Product } from "../Models/Product";
 import { Quiz } from "../Models/Quiz";
 import { Announcement } from "../Models/Announcement";
 import { Event } from "../Models/Event";
+import { createNotification } from "./notificationController";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -468,10 +469,60 @@ export const createEvent = async (req: Request, res: Response) => {
 
         await event.save();
 
+        // Send notifications to all users about the new event
+        try {
+            const users = await User.find().select("_id");
+            const notificationTitle = `New Event: ${title}`;
+            const notificationMessage = `A new event "${title}" has been added. Check it out!`;
+
+            const emailHtml = `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <h2 style="color: #2A996B;">New Event Added</h2>
+                    <p>Hello,</p>
+                    <p>A new event has been added to IFUMSA!</p>
+                    <h3 style="color: #2A996B;">${title}</h3>
+                    <p>${description || "Check out this new event on the app for more details."}</p>
+                    ${location ? `<p><strong>Location:</strong> ${location}</p>` : ""}
+                    ${startDate ? `<p><strong>Date:</strong> ${new Date(startDate).toLocaleDateString()}</p>` : ""}
+                    <p>Visit the IFUMSA app to learn more and register for this event.</p>
+                    <p>Best regards,<br>IFUMSA Team</p>
+                </div>
+            `;
+
+            // Send notifications to all users (don't block the response)
+            for (const user of users) {
+                try {
+                    await createNotification(
+                        (user._id as unknown as any).toString(),
+                        "event",
+                        notificationTitle,
+                        notificationMessage,
+                        emailHtml,
+                        { eventId: event._id, eventName: title }
+                    );
+                } catch (notifError) {
+                    console.error(`Failed to notify user ${user._id} about event:`, notifError);
+                }
+            }
+        } catch (notificationError) {
+            console.error("Error sending event notifications:", notificationError);
+            // Don't fail the event creation if notifications fail
+        }
+
         res.status(201).json({ message: "Event created", event });
         return;
-    } catch (error) {
+    } catch (error: any) {
         console.error("Create event error:", error);
+        
+        // Handle validation errors
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors)
+                .map((err: any) => err.message)
+                .join(", ");
+            res.status(400).json({ message: `Validation error: ${messages}` });
+            return;
+        }
+
         res.status(500).json({ message: "Server error" });
         return;
     }
@@ -516,6 +567,240 @@ export const deleteEvent = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Delete event error:", error);
         res.status(500).json({ message: "Server error" });
+        return;
+    }
+};
+
+// Generate random password
+const generatePassword = (length: number = 12): string => {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*";
+    let password = "";
+    for (let i = 0; i < length; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+};
+
+// Send admin credentials email
+const sendAdminCredentialsEmail = async (email: string, password: string, firstName: string): Promise<void> => {
+    const emailService = require("../Services/emailService");
+
+    try {
+        const htmlContent = `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                <h2 style="color: #2A996B;">Welcome to IFUMSA Admin Panel</h2>
+                <p>Hello ${firstName},</p>
+                <p>You have been added as an admin to the IFUMSA platform. Please use the credentials below to log in:</p>
+                
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+                    <p><strong>Email:</strong> ${email}</p>
+                    <p><strong>Password:</strong> <code style="background: white; padding: 5px 10px; border-radius: 3px; font-family: monospace;">${password}</code></p>
+                </div>
+                
+                <p><strong>⚠️ Important:</strong> Please change your password immediately after logging in for security purposes.</p>
+                
+                <p><a href="${process.env.ADMIN_URL || "http://localhost:3001"}/login" style="display: inline-block; background-color: #2A996B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px;">Log in to Admin Panel</a></p>
+                
+                <p>If you have any questions, please contact support.</p>
+                <p>Best regards,<br>IFUMSA Team</p>
+            </div>
+        `;
+
+        const result = await emailService.sendEmail({
+            to: email,
+            subject: "Welcome to IFUMSA Admin Panel - Your Login Credentials",
+            html: htmlContent,
+        });
+
+        if (!result) {
+            throw new Error("Failed to send email");
+        }
+    } catch (error) {
+        console.error("Error sending admin credentials email:", error);
+        throw error;
+    }
+};
+
+// Add new admin
+export const addNewAdmin = async (req: Request, res: Response) => {
+    try {
+        const { email, firstName, lastName } = req.body;
+        const currentUserEmail = req.session.userEmail?.toLowerCase();
+        const adminEmails = getAdminEmails();
+
+        // Validate current user is admin
+        if (!req.session.userId || !currentUserEmail || !adminEmails.includes(currentUserEmail)) {
+            res.status(401).json({ message: "You do not have permission to add admins" });
+            return;
+        }
+
+        // Validate input
+        if (!email || !firstName || !lastName) {
+            res.status(400).json({ message: "Email, first name, and last name are required" });
+            return;
+        }
+
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            res.status(400).json({ message: "Invalid email format" });
+            return;
+        }
+
+        // Check if user already exists
+        const existingUser = await User.findOne({ email: email.toLowerCase() });
+        if (existingUser) {
+            res.status(409).json({ message: "User with this email already exists" });
+            return;
+        }
+
+        // Generate username from email (take part before @)
+        const baseUserName = email.split("@")[0];
+        let userName = baseUserName;
+        let counter = 1;
+
+        // Ensure username is unique
+        while (await User.findOne({ userName })) {
+            userName = `${baseUserName}${counter}`;
+            counter++;
+        }
+
+        // Generate password and hash it
+        const password = generatePassword();
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // Create new admin user
+        const newAdmin = new User({
+            email: email.toLowerCase(),
+            userName,
+            firstName,
+            lastName,
+            password: hashedPassword,
+            isVerified: true,
+            role: "admin",
+        });
+
+        await newAdmin.save();
+
+        // Send credentials email (don't fail if email fails)
+        try {
+            await sendAdminCredentialsEmail(email, password, firstName);
+        } catch (emailError) {
+            console.error("Failed to send admin credentials email:", emailError);
+            // Continue anyway - admin was created successfully
+        }
+
+        res.status(201).json({
+            message: "Admin created successfully. Credentials have been sent to their email.",
+            admin: {
+                id: newAdmin._id,
+                email: newAdmin.email,
+                firstName: newAdmin.firstName,
+                lastName: newAdmin.lastName,
+            },
+        });
+        return;
+    } catch (error: any) {
+        console.error("Add new admin error:", error);
+
+        // Handle Mongoose validation errors
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors)
+                .map((err: any) => err.message)
+                .join(", ");
+            res.status(400).json({ message: `Validation error: ${messages}` });
+            return;
+        }
+
+        // Handle Mongoose duplicate key errors
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
+            res.status(409).json({ message: `${field} already exists` });
+            return;
+        }
+
+        // Handle other errors
+        res.status(500).json({ message: "Server error, try again" });
+        return;
+    }
+};
+
+// Get all admins
+export const getAllAdmins = async (req: Request, res: Response) => {
+    try {
+        const currentUserEmail = req.session.userEmail?.toLowerCase();
+        const adminEmails = getAdminEmails();
+
+        // Validate current user is admin
+        if (!req.session.userId || !currentUserEmail || !adminEmails.includes(currentUserEmail)) {
+            res.status(401).json({ message: "You do not have permission to view admins" });
+            return;
+        }
+
+        const admins = await User.find({ role: "admin" }).select("_id email firstName lastName createdAt").sort({ createdAt: -1 });
+
+        res.json({ admins });
+        return;
+    } catch (error) {
+        console.error("Get admins error:", error);
+        res.status(500).json({ message: "Server error" });
+        return;
+    }
+};
+
+// Remove admin
+export const removeAdmin = async (req: Request, res: Response) => {
+    try {
+        const { adminId } = req.body;
+        const currentUserEmail = req.session.userEmail?.toLowerCase();
+        const adminEmails = getAdminEmails();
+
+        // Validate current user is admin
+        if (!req.session.userId || !currentUserEmail || !adminEmails.includes(currentUserEmail)) {
+            res.status(401).json({ message: "You do not have permission to remove admins" });
+            return;
+        }
+
+        // Validate input
+        if (!adminId) {
+            res.status(400).json({ message: "Admin ID is required" });
+            return;
+        }
+
+        // Check if user exists and is admin
+        const adminToRemove = await User.findById(adminId);
+        if (!adminToRemove) {
+            res.status(404).json({ message: "Admin not found" });
+            return;
+        }
+
+        if (adminToRemove.role !== "admin") {
+            res.status(400).json({ message: "This user is not an admin" });
+            return;
+        }
+
+        // Prevent removing yourself
+        if (adminToRemove._id && adminToRemove._id.toString() === req.session.userId) {
+            res.status(400).json({ message: "You cannot remove yourself as an admin" });
+            return;
+        }
+
+        // Remove admin role
+        adminToRemove.role = "user";
+        await adminToRemove.save();
+
+        res.json({
+            message: "Admin removed successfully",
+            user: {
+                id: adminToRemove._id,
+                email: adminToRemove.email,
+                firstName: adminToRemove.firstName,
+            },
+        });
+        return;
+    } catch (error) {
+        console.error("Remove admin error:", error);
+        res.status(500).json({ message: "Server error, try again" });
         return;
     }
 };

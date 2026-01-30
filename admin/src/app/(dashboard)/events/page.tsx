@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Plus, Pencil, Trash2, Calendar, MapPin } from "lucide-react";
 import { api, Event } from "@/lib/api";
+import { EventReminder } from "@/components/event-reminder";
 
 export default function EventsPage() {
     const [events, setEvents] = useState<Event[]>([]);
@@ -256,13 +257,13 @@ export default function EventsPage() {
                                         <img
                                             src={event.image}
                                             alt={event.title}
-                                            className="w-24 h-24 rounded-lg object-cover flex-shrink-0"
+                                            className="w-24 h-24 rounded-lg object-cover shrink-0"
                                         />
                                     )}
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-start justify-between gap-2">
                                             <h3 className="font-medium">{event.title}</h3>
-                                            <div className="flex gap-2 flex-shrink-0">
+                                            <div className="flex gap-2 shrink-0">
                                                 <Badge variant={event.isActive ? "default" : "secondary"}>
                                                     {event.isActive ? "Active" : "Inactive"}
                                                 </Badge>
@@ -311,6 +312,8 @@ export default function EventsPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <EventReminder events={events} />
         </div>
     );
 }

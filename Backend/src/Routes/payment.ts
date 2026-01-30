@@ -30,6 +30,9 @@ paymentRouter.post("/annual-dues", requireAuth, createAnnualDuesPayment);
 // Submit payment proof (bank transfer)
 paymentRouter.post("/:id/proof", requireAuth, submitPaymentProof);
 
+// Update payment status (admin approval)
+paymentRouter.post("/update-status", requireAuth, updatePaymentStatus);
+
 // Update payment status (webhook - no auth, uses signature verification)
 paymentRouter.post("/webhook", updatePaymentStatus);
 

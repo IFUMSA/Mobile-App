@@ -45,6 +45,14 @@ export function Home() {
         };
     }, [eventData]);
 
+    // Handle hydration mismatch
+    const [mounted, setMounted] = useState(false);
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
+
     return (
         <div className="flex-1 min-h-screen bg-white">
             {/* Header - Matches mobile: primary bg, rounded bottom corners */}

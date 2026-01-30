@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Check, X, Clock, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
 import { api, Order } from "@/lib/api";
+import { PaymentApproval } from "@/components/payment-approval";
 
 const statusColors: Record<string, string> = {
     pending: "bg-yellow-100 text-yellow-800",
@@ -264,26 +265,23 @@ export default function OrderDetailPage() {
                             />
                         </div>
 
+                        {order.status === "submitted" && (
+                            <PaymentApproval 
+                                payment={order}
+                                onApprovalSuccess={() => fetchOrder(order._id)}
+                            />
+                        )}
+
                         <div className="flex flex-wrap gap-3">
                             {order.status === "submitted" && (
-                                <>
-                                    <Button
-                                        onClick={() => updateStatus("confirmed")}
-                                        disabled={updating}
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        <Check className="h-4 w-4 mr-2" />
-                                        Confirm Payment
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        onClick={() => updateStatus("rejected")}
-                                        disabled={updating}
-                                    >
-                                        <X className="h-4 w-4 mr-2" />
-                                        Reject
-                                    </Button>
-                                </>
+                                <Button
+                                    variant="destructive"
+                                    onClick={() => updateStatus("rejected")}
+                                    disabled={updating}
+                                >
+                                    <X className="h-4 w-4 mr-2" />
+                                    Reject
+                                </Button>
                             )}
 
                             {order.status === "confirmed" && (

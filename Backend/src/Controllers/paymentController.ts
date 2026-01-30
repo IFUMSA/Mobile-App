@@ -1,7 +1,9 @@
 import { Request, Response } from "express";
 import { Payment } from "../Models/Payment";
 import { Cart } from "../Models/Cart";
+import { User } from "../Models/User";
 import { IPayment, PaymentStatus } from "../Interfaces/payment.interface";
+import { createNotification } from "./notificationController";
 import crypto from "crypto";
 
 /**
@@ -153,7 +155,7 @@ export const createPayment = async (req: Request, res: Response) => {
  */
 export const updatePaymentStatus = async (req: Request, res: Response) => {
     try {
-        const { reference, status } = req.body;
+        const { reference, status, approvalMessage } = req.body;
 
         if (!reference || !status) {
             res.status(400).json({ message: "Reference and status required" });
@@ -169,19 +171,110 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
             { reference },
             { status },
             { new: true }
-        );
+        ).populate("userId", "_id email");
 
         if (!payment) {
             res.status(404).json({ message: "Payment not found" });
             return;
         }
 
+        // Get all admins to notify them on payment submission
+        if (status === "submitted") {
+            try {
+                const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
+                const admins = await User.find({ email: { $in: adminEmails } }).select("_id email firstName");
+
+                const notificationTitle = "New Payment Submitted";
+                const notificationMessage = `A new payment of amount has been submitted for review.`;
+
+                const emailHtml = `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <h2 style="color: #2A996B;">Payment Submitted for Review</h2>
+                        <p>Hello Admin,</p>
+                        <p>A new payment has been submitted and is awaiting your review.</p>
+                        <p><strong>Payment Details:</strong></p>
+                        <ul>
+                            <li><strong>Reference:</strong> ${payment.reference}</li>
+                            <li><strong>Item:</strong> ${payment.title}</li>
+                            <li><strong>Amount:</strong> ₦${payment.amount}</li>
+                        </ul>
+                        <p>Please review the payment proof and approve or reject it.</p>
+                        <p>Best regards,<br>IFUMSA System</p>
+                    </div>
+                `;
+
+                for (const admin of admins) {
+                    try {
+                        await createNotification(
+                            (admin._id as any).toString(),
+                            "payment",
+                            notificationTitle,
+                            notificationMessage,
+                            emailHtml,
+                            { paymentId: payment._id, itemName: payment.title }
+                        );
+                    } catch (notifError) {
+                        console.error(`Failed to notify admin ${admin._id}:`, notifError);
+                    }
+                }
+            } catch (adminNotifyError) {
+                console.error("Error notifying admins about payment:", adminNotifyError);
+                // Don't block the response
+            }
+        }
+
+        // If payment confirmed/completed, notify the user
+        if (status === "confirmed" || status === "completed") {
+            try {
+                const user = payment.userId as any;
+                const notificationTitle = "Payment Approved!";
+                const defaultMessage = "Your payment has been approved successfully!";
+                const userMessage = approvalMessage || defaultMessage;
+                const notificationMessage = userMessage;
+
+                const emailHtml = `
+                    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                        <h2 style="color: #2A996B;">Payment Approved!</h2>
+                        <p>Hello,</p>
+                        <p>Great news! Your payment has been approved.</p>
+                        <p><strong>Payment Details:</strong></p>
+                        <ul>
+                            <li><strong>Reference:</strong> ${payment.reference}</li>
+                            <li><strong>Item:</strong> ${payment.title}</li>
+                            <li><strong>Amount:</strong> ₦${payment.amount}</li>
+                        </ul>
+                        <p><strong>Next Steps:</strong></p>
+                        <p>${userMessage}</p>
+                        <p>Thank you for your payment!</p>
+                        <p>Best regards,<br>IFUMSA Team</p>
+                    </div>
+                `;
+
+                await createNotification(
+                    user._id.toString(),
+                    "payment_approval",
+                    notificationTitle,
+                    notificationMessage,
+                    emailHtml,
+                    { paymentId: payment._id, itemName: payment.title, approvalMessage: userMessage }
+                );
+            } catch (userNotifyError) {
+                console.error("Error notifying user about payment approval:", userNotifyError);
+                // Don't block the response
+            }
+        }
+
         // If payment completed, clear the user's cart
         if (status === "completed") {
-            await Cart.findOneAndUpdate(
-                { userId: payment.userId },
-                { items: [], total: 0 }
-            );
+            try {
+                await Cart.findOneAndUpdate(
+                    { userId: payment.userId },
+                    { items: [], total: 0 }
+                );
+            } catch (cartError) {
+                console.error("Error clearing cart:", cartError);
+                // Don't block the response
+            }
         }
 
         res.status(200).json({
@@ -192,9 +285,21 @@ export const updatePaymentStatus = async (req: Request, res: Response) => {
                 reference: payment.reference,
             },
         });
-    } catch (error) {
+        return;
+    } catch (error: any) {
         console.error("Update payment status error:", error);
+
+        // Handle validation errors
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors)
+                .map((err: any) => err.message)
+                .join(", ");
+            res.status(400).json({ message: `Validation error: ${messages}` });
+            return;
+        }
+
         res.status(500).json({ message: "Server error" });
+        return;
     }
 };
 
@@ -233,6 +338,17 @@ export const submitPaymentProof = async (req: Request, res: Response) => {
         payment.status = "submitted" as PaymentStatus;
         await payment.save();
 
+        // Clear user's cart after submitting proof
+        try {
+            await Cart.findOneAndUpdate(
+                { userId },
+                { items: [], total: 0 }
+            );
+        } catch (cartError) {
+            console.error("Error clearing cart after proof submission:", cartError);
+            // Don't block response
+        }
+
         res.status(200).json({
             message: "Payment proof submitted successfully",
             payment: {
@@ -241,9 +357,21 @@ export const submitPaymentProof = async (req: Request, res: Response) => {
                 reference: payment.reference,
             },
         });
-    } catch (error) {
+        return;
+    } catch (error: any) {
         console.error("Submit payment proof error:", error);
+
+        // Handle validation errors
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors)
+                .map((err: any) => err.message)
+                .join(", ");
+            res.status(400).json({ message: `Validation error: ${messages}` });
+            return;
+        }
+
         res.status(500).json({ message: "Server error" });
+        return;
     }
 };
 
