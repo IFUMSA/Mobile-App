@@ -86,6 +86,9 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response) => {
         hasCompletedOnboarding: user.hasCompletedOnboarding,
         level: user.level,
         faculty: user.faculty,
+        studentClass: user.studentClass,
+        matricNumber: user.matricNumber,
+        phone: user.phone,
       },
     });
   } catch (error) {

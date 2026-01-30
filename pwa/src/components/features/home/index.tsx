@@ -69,20 +69,19 @@ export function Home() {
             <Container className="relative z-10">
                 <AnnouncementCarousel />
 
-                <Text variant="heading2" fontWeight="600" className="mt-9">
-                    Next Event
-                </Text>
-
-                {nextEvent ? (
-                    <EventCard
-                        title={nextEvent.title}
-                        location={nextEvent.location}
-                        time={nextEvent.time}
-                        date={nextEvent.date}
-                        image={nextEvent.image}
-                    />
-                ) : (
-                    <EventCard />
+                {nextEvent && (
+                    <>
+                        <Text variant="heading2" fontWeight="600" className="mt-9">
+                            Next Event
+                        </Text>
+                        <EventCard
+                            title={nextEvent.title}
+                            location={nextEvent.location}
+                            time={nextEvent.time}
+                            date={nextEvent.date}
+                            image={nextEvent.image}
+                        />
+                    </>
                 )}
 
                 <NavigationLinks />

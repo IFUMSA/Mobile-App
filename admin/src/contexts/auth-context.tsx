@@ -3,8 +3,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-
 interface AdminUser {
     id: string;
     email: string;
@@ -28,12 +26,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
 
-    // Validate session with backend on mount and periodically
+    // Validate session via local API proxy (same-origin cookies)
     const checkSession = useCallback(async () => {
         try {
-            const res = await fetch(`${API_URL}/api/admin/session`, {
-                credentials: "include",
-            });
+            const res = await fetch("/api/auth/session");
 
             if (res.ok) {
                 const data = await res.json();
@@ -71,10 +67,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [user, isLoading, pathname, router]);
 
     const login = async (email: string, password: string) => {
-        const res = await fetch(`${API_URL}/api/admin/login`, {
+        // Use local API proxy for same-origin cookies (avoids cross-origin issues)
+        const res = await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            credentials: "include",
             body: JSON.stringify({ email, password }),
         });
 
@@ -85,14 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         setUser(data.user);
-        router.push("/");
+        // Use hard redirect to ensure middleware picks up new cookie
+        window.location.href = "/";
     };
 
     const logout = async () => {
         try {
-            await fetch(`${API_URL}/api/admin/logout`, {
+            await fetch("/api/auth/logout", {
                 method: "POST",
-                credentials: "include",
             });
         } catch {
             // Ignore logout errors

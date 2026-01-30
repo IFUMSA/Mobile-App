@@ -90,6 +90,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const checkAuth = async () => {
             try {
                 const data = await authApi.getMe();
+                console.log("=== AUTH USER DATA ===", data.user);
                 setUser(data.user);
             } catch {
                 setUser(null);
