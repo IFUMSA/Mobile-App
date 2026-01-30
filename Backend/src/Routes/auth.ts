@@ -71,7 +71,8 @@ authRouter.get("/me", requireAuth, async (req: Request, res: Response) => {
     const userId = (req.session as any).userId;
     const user = await User.findById(userId).select("-password");
     if (!user) {
-      return res.status(404).json({ message: "User not found" });
+      res.status(404).json({ message: "User not found" });
+      return;
     }
     res.json({
       user: {
@@ -98,7 +99,8 @@ authRouter.post("/logout", (req: Request, res: Response) => {
   req.session.destroy((err) => {
     if (err) {
       console.error("Logout error:", err);
-      return res.status(500).json({ message: "Logout failed" });
+      res.status(500).json({ message: "Logout failed" });
+      return;
     }
     res.clearCookie("connect.sid");
     res.json({ message: "Logged out successfully" });

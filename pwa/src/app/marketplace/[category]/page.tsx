@@ -1,25 +1,44 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Text } from "@/components/ui/text";
 import { Container } from "@/components/ui/container";
 import { PageHeader } from "@/components/ui/page-header";
 import { useProducts, useProductCategories } from "@/hooks/use-products";
-import { useAddToCartMutation } from "@/hooks/use-cart";
-import { ShoppingBag, Loader2 } from "lucide-react";
+import { useAddToCartMutation, useCart } from "@/hooks/use-cart";
+import { ShoppingBag, Loader2, ShoppingCart } from "lucide-react";
 import Image from "next/image";
 
 export default function CategoryProductsPage() {
     const params = useParams();
-    const category = (params.category as string) || "";
-    const categoryTitle = category.charAt(0).toUpperCase() + category.slice(1);
+    const categoryParam = (params.category as string) || "";
+    
+    // Map lowercase URL parameter to actual category names in database
+    const categoryMap: Record<string, string> = {
+        clinical: "Clinical Essentials",
+        merch: "Merchandise",
+        merchandise: "Merchandise",
+        synopsis: "Synopses",
+        synopses: "Synopses",
+    };
+    
+    const category = categoryMap[categoryParam.toLowerCase()] || categoryParam;
+    const categoryTitle = category;
 
     const { data: productsData, isLoading } = useProducts(category);
+    const { data: cartData } = useCart();
     const addToCart = useAddToCartMutation();
     const [addedItems, setAddedItems] = React.useState<Set<string>>(new Set());
+    const [mounted, setMounted] = React.useState(false);
 
     const products = productsData?.products || [];
+    const cartItemCount = cartData?.cart?.items?.length || 0;
+
+    React.useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const formatPrice = (price: number) => {
         return new Intl.NumberFormat("en-NG").format(price);
@@ -36,7 +55,8 @@ export default function CategoryProductsPage() {
         }
     };
 
-    if (isLoading) {
+    // Prevent hydration mismatch
+    if (!mounted || isLoading) {
         return (
             <Container className="min-h-screen">
                 <PageHeader title={categoryTitle} />
@@ -49,10 +69,25 @@ export default function CategoryProductsPage() {
 
     return (
         <Container className="min-h-screen">
-            <PageHeader title={categoryTitle} />
+            <div className="flex justify-between items-center mb-4">
+                <PageHeader title={categoryTitle} />
+                <Link 
+                    href="/cart"
+                    className="bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow"
+                >
+                    <div className="relative">
+                        <ShoppingCart size={24} className="text-[#2A996B]" />
+                        {cartItemCount > 0 && (
+                            <div className="absolute -top-2 -right-2 bg-[#2A996B] text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center">
+                                {cartItemCount}
+                            </div>
+                        )}
+                    </div>
+                </Link>
+            </div>
 
             {products.length === 0 ? (
-                <div className="flex-1 flex flex-col items-center justify-center py-[60px]">
+                <div className="flex-1 flex flex-col items-center justify-center py-15">
                     <ShoppingBag size={48} className="text-[#C1C1C1]" />
                     <Text variant="body" color="gray" className="mt-3">
                         No products available
@@ -68,7 +103,7 @@ export default function CategoryProductsPage() {
                                 key={product._id}
                                 className="flex items-center p-3 rounded-lg border border-[#D9D9D9] bg-white"
                             >
-                                <div className="w-[78px] h-[100px] rounded overflow-hidden bg-[#F5F5F5]">
+                                <div className="w-19.5 h-25 rounded overflow-hidden bg-[#F5F5F5]">
                                     {product.image && (
                                         <Image
                                             src={product.image}
