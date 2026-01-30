@@ -12,7 +12,7 @@ export const requireAuth = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {
+): Promise<void> => {
   try {
     // Method 1: Check Authorization header (JWT token)
     const authHeader = req.headers.authorization;
@@ -29,24 +29,28 @@ export const requireAuth = async (
         req.session.userId = decoded.userId;
         req.session.isAuthenticated = true;
         console.log("Auth: JWT token validated, userId:", decoded.userId);
-        return next();
+        next();
+        return;
       } catch (jwtError) {
         console.log("Auth: Invalid JWT token");
-        return res.status(401).json({ message: "Invalid or expired token" });
+        res.status(401).json({ message: "Invalid or expired token" });
+        return;
       }
     }
 
     // Method 2: Check session (cookie-based auth)
     if (req.session.isAuthenticated && req.session.userId) {
       console.log("Auth: Session validated, userId:", req.session.userId);
-      return next();
+      next();
+      return;
     }
 
     // No valid auth found
     console.log("Auth: No valid authentication found");
-    return res.status(401).json({ message: "Unauthorized" });
+    res.status(401).json({ message: "Unauthorized" });
+    return;
   } catch (error) {
     console.error("Auth middleware error:", error);
-    return res.status(500).json({ message: "Authentication error" });
+    res.status(500).json({ message: "Authentication error" });
   }
 };
