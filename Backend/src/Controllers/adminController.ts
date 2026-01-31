@@ -6,6 +6,7 @@ import { Quiz } from "../Models/Quiz";
 import { Announcement } from "../Models/Announcement";
 import { Event } from "../Models/Event";
 import { createNotification } from "./notificationController";
+import { sendAdminCredentialsEmail } from "../Services/emailService";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -587,45 +588,7 @@ const generatePassword = (length: number = 12): string => {
     return password;
 };
 
-// Send admin credentials email
-const sendAdminCredentialsEmail = async (email: string, password: string, firstName: string): Promise<void> => {
-    const emailService = require("../Services/emailService");
 
-    try {
-        const htmlContent = `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                <h2 style="color: #2A996B;">Welcome to IFUMSA Admin Panel</h2>
-                <p>Hello ${firstName},</p>
-                <p>You have been added as an admin to the IFUMSA platform. Please use the credentials below to log in:</p>
-                
-                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                    <p><strong>Email:</strong> ${email}</p>
-                    <p><strong>Password:</strong> <code style="background: white; padding: 5px 10px; border-radius: 3px; font-family: monospace;">${password}</code></p>
-                </div>
-                
-                <p><strong>⚠️ Important:</strong> Please change your password immediately after logging in for security purposes.</p>
-                
-                <p><a href="${process.env.ADMIN_URL || "http://localhost:3001"}/login" style="display: inline-block; background-color: #2A996B; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 20px;">Log in to Admin Panel</a></p>
-                
-                <p>If you have any questions, please contact support.</p>
-                <p>Best regards,<br>IFUMSA Team</p>
-            </div>
-        `;
-
-        const result = await emailService.sendEmail({
-            to: email,
-            subject: "Welcome to IFUMSA Admin Panel - Your Login Credentials",
-            html: htmlContent,
-        });
-
-        if (!result) {
-            throw new Error("Failed to send email");
-        }
-    } catch (error) {
-        console.error("Error sending admin credentials email:", error);
-        throw error;
-    }
-};
 
 // Add new admin
 export const addNewAdmin = async (req: Request, res: Response) => {

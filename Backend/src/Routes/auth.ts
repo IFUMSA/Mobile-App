@@ -20,7 +20,7 @@ authRouter.post(
   "/signup",
   [
     check("email", "Please Enter A Valid email").isEmail(),
-    check("password", "A Valid Password Is Required").isStrongPassword(),
+    check("password", "Password must be at least 6 characters").isLength({ min: 6 }),
   ],
   createUser
 );
@@ -30,7 +30,7 @@ authRouter.post(
   "/register",
   [
     check("email", "Please Enter A Valid email").isEmail(),
-    check("password", "A Valid Password Is Required").isStrongPassword(),
+    check("password", "Password must be at least 6 characters").isLength({ min: 6 }),
   ],
   createUser
 );
@@ -50,7 +50,7 @@ authRouter.post(
   "/signin",
   [
     check("email", "Please Enter A Valid email").isEmail(),
-    check("password", "A Valid Password Is Required").isStrongPassword(),
+    check("password", "Password must be at least 6 characters").isLength({ min: 6 }),
   ],
   signInUser
 );
@@ -60,7 +60,7 @@ authRouter.post(
   "/login",
   [
     check("email", "Please Enter A Valid email").isEmail(),
-    check("password", "A Valid Password Is Required").isStrongPassword(),
+    check("password", "Password must be at least 6 characters").isLength({ min: 6 }),
   ],
   signInUser
 );

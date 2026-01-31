@@ -18,6 +18,7 @@ export default {
     EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
     FRONTEND_URL: process.env.FRONTEND_URL,
     APP_URL: process.env.APP_URL,
+    ADMIN_URL: process.env.ADMIN_URL,
     SESSION_SECRET: process.env.SESSION_SECRET,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
     // Cloudinary

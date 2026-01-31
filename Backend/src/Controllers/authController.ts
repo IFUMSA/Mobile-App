@@ -418,6 +418,14 @@ export const resetPassword = async (req: Request, res: Response) => {
       return;
     }
 
+    // Validate password length (same as signup)
+    if (newPassword.length < 6) {
+      res
+        .status(400)
+        .json({ message: "Password must be at least 6 characters" });
+      return;
+    }
+
     // Find user with token
     const user = await User.findOne({
       resetToken,
