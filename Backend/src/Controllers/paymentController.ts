@@ -382,9 +382,9 @@ export const getBankDetails = async (req: Request, res: Response) => {
     try {
         // These would typically come from environment variables or database
         res.status(200).json({
-            bankName: "First Bank of Nigeria",
-            accountNumber: "3001234567",
-            accountName: "IFUMSA",
+            bankName: "Wema Bank",
+            accountNumber: "0121231019",
+            accountName: "Medical Students Association",
             note: "Please include your payment reference in the transfer description",
         });
     } catch (error) {
