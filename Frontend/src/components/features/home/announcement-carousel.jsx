@@ -20,7 +20,7 @@ const fallbackData = [
   {
     id: 1,
     title: "Have Access to The Premium Features",
-    description: "Unlock premium quiz features with an annual subscription",
+    description: "Unlock premium quiz features",
   },
   {
     id: 2,

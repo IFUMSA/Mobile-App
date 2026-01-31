@@ -90,7 +90,7 @@ const BankTransferScreen = () => {
             <View style={styles.infoRow}>
               <Text variant="body2" color="gray">Amount</Text>
               <Text variant="body" fontWeight="700" color="secondary">
-                ₦{formatPrice(amount || 5000)}
+                ₦{formatPrice(amount || 1000)}
               </Text>
             </View>
             <View style={styles.infoRow}>

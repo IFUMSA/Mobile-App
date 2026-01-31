@@ -407,7 +407,7 @@ export const createAnnualDuesPayment = async (req: Request, res: Response) => {
         }
 
         // Annual dues amount - could be from config/database
-        const ANNUAL_DUES_AMOUNT = 5000;
+        const ANNUAL_DUES_AMOUNT = 1000;
 
         // Check if user already has a pending annual dues payment
         const existingPayment = await Payment.findOne({
