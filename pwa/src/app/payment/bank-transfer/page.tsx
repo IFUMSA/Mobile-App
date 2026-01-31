@@ -23,9 +23,9 @@ function BankTransferContent() {
     const [proofImage, setProofImage] = useState<string | null>(null);
 
     const bankDetails = bankData || {
-        bankName: "GTBank",
-        accountName: "IFUMSA",
-        accountNumber: "0123456789",
+        bankName: "Wema Bank",
+        accountName: "Medical Students Association",
+        accountNumber: "0121231019",
     };
 
     const handleCopy = (text: string, field: string) => {
