@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { cartService } from "@/services/cart";
+import { useAuth } from "@/context/auth-context";
 
 // Query keys
 export const cartKeys = {
@@ -9,11 +10,14 @@ export const cartKeys = {
     detail: () => [...cartKeys.all, "detail"] as const,
 };
 
-// Get cart
+// Get cart - only fetch when authenticated
 export function useCart() {
+    const { isAuthenticated, isLoading } = useAuth();
+
     return useQuery({
         queryKey: cartKeys.detail(),
         queryFn: cartService.getCart,
+        enabled: isAuthenticated && !isLoading,
     });
 }
 

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/api";
+import { useAuth } from "@/context/auth-context";
 
 export interface Notification {
     _id: string;
@@ -24,14 +25,18 @@ export const notificationKeys = {
     list: () => [...notificationKeys.all, "list"] as const,
 };
 
+// Get notifications - only fetch when authenticated
 export function useNotifications() {
+    const { isAuthenticated, isLoading } = useAuth();
+
     return useQuery({
         queryKey: notificationKeys.list(),
         queryFn: async () => {
             const { data } = await api.get<NotificationsResponse>("/api/notifications");
             return data;
         },
-        refetchInterval: 30000, // Poll every 30 seconds
+        refetchInterval: isAuthenticated ? 30000 : false,
+        enabled: isAuthenticated && !isLoading,
     });
 }
 
