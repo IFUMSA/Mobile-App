@@ -87,12 +87,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setOnUnauthorized(handleUnauthorized);
 
         // Check auth status on mount - uses cookie via Vercel proxy
-        const checkAuth = async () => {
+        const checkAuth = async (retryCount = 0) => {
             try {
+                console.log(`[Auth] Checking auth (attempt ${retryCount + 1})...`);
                 const data = await authApi.getMe();
-                console.log("=== AUTH USER DATA ===", data.user);
+                console.log("[Auth] User authenticated:", data.user?.email);
                 setUser(data.user);
-            } catch {
+                // Store token in memory for direct API calls
+                if (data.token) {
+                    setAuthToken(data.token);
+                }
+            } catch (error: any) {
+                console.log("[Auth] Check failed:", error?.message || "Unknown error");
+                // Retry once on failure (handles race conditions on rapid reload)
+                if (retryCount < 1 && error?.status !== 401) {
+                    console.log("[Auth] Retrying in 500ms...");
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    return checkAuth(retryCount + 1);
+                }
                 setUser(null);
             } finally {
                 setIsLoading(false);

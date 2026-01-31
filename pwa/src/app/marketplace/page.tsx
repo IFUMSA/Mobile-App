@@ -5,51 +5,23 @@ import Link from "next/link";
 import { Text } from "@/components/ui/text";
 import { useProductCategories } from "@/hooks/use-products";
 import { useCart } from "@/hooks/use-cart";
-import { ShoppingBag, Loader2, ShoppingCart } from "lucide-react";
+import { ShoppingBag, Loader2, ShoppingCart, Package } from "lucide-react";
 import Image from "next/image";
 
-// Map category values to display names and icons
-const categoryConfig = [
-	{
-		key: "Clinical",
-		title: "Clinical Essentials",
-		icon: (
-			<Image
-				src="/images/clinical-essentials.png"
-				alt="clinical essentials"
-				width={200}
-				height={100}
-				className="rounded-xl"
-			/>
-		),
-	},
-	{
-		key: "Merchandise",
-		title: "Merchandise",
-		icon: (
-			<Image
-				src="/images/merchandise.png"
-				alt="merchandise"
-				width={200}
-				height={100}
-				className="rounded-xl"
-			/>
-		),
-	},
-	{
-		key: "Synopses",
-		title: "Synopses",
-		icon: (
-			<Image
-				src="/images/synopsis.png"
-				alt="synopsis"
-				width={200}
-				height={100}
-				className="rounded-xl"
-			/>
-		),
-	},
-];
+// Optional: Map category keys to custom images (fallback to icon if not found)
+const categoryImages: Record<string, string> = {
+	clinical: "/images/clinical-essentials.png",
+	merchandise: "/images/merchandise.png",
+	synopses: "/images/synopsis.png",
+};
+
+// Format category name for display
+const formatCategoryName = (category: string) => {
+	return category
+		.split(/[-_]/)
+		.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+		.join(" ");
+};
 
 export default function MarketplacePage() {
 	const { data: categoriesData, isLoading } = useProductCategories();
@@ -127,27 +99,45 @@ export default function MarketplacePage() {
 							Browse Categories
 						</Text>
 
-						{/* Centered 3-column grid */}
-						<div className="grid grid-cols-3 gap-4 max-w-sm mx-auto">
-							{categoryConfig.map((config) => (
-								<Link
-									key={config.key}
-									href={`/marketplace/${config.key.toLowerCase()}`}
-									className="flex-1 max-w-37.5 rounded-xl py-4 px-1 bg-white flex flex-col items-center no-underline"
-								>
-									<div className="w-27 h-27 rounded-2xl bg-[#D9D9D9]/30 flex items-center justify-center mb-3">
-										{config.icon}
-									</div>
-									<Text
-										variant="body"
-										fontWeight="600"
-										align="center"
-										className="mt-2 text-sm"
+						{/* Dynamic grid based on category count */}
+						<div className={`grid gap-4 max-w-md mx-auto ${categories.length === 1 ? "grid-cols-1" :
+								categories.length === 2 ? "grid-cols-2" :
+									"grid-cols-3"
+							}`}>
+							{categories.map((category: string) => {
+								const categoryKey = category.toLowerCase();
+								const hasCustomImage = categoryImages[categoryKey];
+
+								return (
+									<Link
+										key={category}
+										href={`/marketplace/${encodeURIComponent(category)}`}
+										className="flex-1 rounded-xl py-4 px-2 bg-white flex flex-col items-center no-underline hover:bg-gray-50 transition-colors"
 									>
-										{config.title}
-									</Text>
-								</Link>
-							))}
+										<div className="w-24 h-24 rounded-2xl bg-[#D9D9D9]/30 flex items-center justify-center mb-3 overflow-hidden">
+											{hasCustomImage ? (
+												<Image
+													src={categoryImages[categoryKey]}
+													alt={category}
+													width={96}
+													height={96}
+													className="rounded-xl object-cover"
+												/>
+											) : (
+												<Package size={40} className="text-[#2A996B]" />
+											)}
+										</div>
+										<Text
+											variant="body"
+											fontWeight="600"
+											align="center"
+											className="mt-2 text-sm"
+										>
+											{formatCategoryName(category)}
+										</Text>
+									</Link>
+								);
+							})}
 						</div>
 					</>
 				)}
@@ -155,3 +145,4 @@ export default function MarketplacePage() {
 		</div>
 	);
 }
+

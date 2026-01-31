@@ -14,18 +14,15 @@ import Image from "next/image";
 export default function CategoryProductsPage() {
     const params = useParams();
     const categoryParam = (params.category as string) || "";
-    
-    // Map lowercase URL parameter to actual category names in database
-    const categoryMap: Record<string, string> = {
-        clinical: "Clinical Essentials",
-        merch: "Merchandise",
-        merchandise: "Merchandise",
-        synopsis: "Synopses",
-        synopses: "Synopses",
-    };
-    
-    const category = categoryMap[categoryParam.toLowerCase()] || categoryParam;
-    const categoryTitle = category;
+
+    // Decode URL parameter and use directly (categories come from backend as-is)
+    const category = decodeURIComponent(categoryParam);
+
+    // Format for display (capitalize first letter of each word)
+    const categoryTitle = category
+        .split(/[-_]/)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(" ");
 
     const { data: productsData, isLoading } = useProducts(category);
     const { data: cartData } = useCart();
@@ -71,7 +68,7 @@ export default function CategoryProductsPage() {
         <Container className="min-h-screen">
             <div className="flex justify-between items-center mb-4">
                 <PageHeader title={categoryTitle} />
-                <Link 
+                <Link
                     href="/cart"
                     className="bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow"
                 >
